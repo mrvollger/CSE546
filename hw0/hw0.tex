@@ -65,7 +65,7 @@ ii) absolute scalability: $\|a \, x\| = |a| \, \|x\|$ for all $a \in \R$ and $x 
 
 Part a:
 	\begin{align}
-	   	| \lambda x + (1-\lambda) y \| & \le \|\lambda x\| + \|(1-\lambda)y\| \text{ by iii}\\
+	   	\| \lambda x + (1-\lambda) y \| & \le \|\lambda x\| + \|(1-\lambda)y\| \text{ by iii}\\
 	    & \le  |\lambda| \| x\| + |(1-\lambda)| \|y\| \text{ by ii}\\
 	    & \le  \lambda \| x\| + (1-\lambda) \|y\| \text{ because $\lambda \in [0,1]$}\\
     	& \le  \lambda + (1-\lambda) \text{ because $\|x\| \le 1$}\\
@@ -190,7 +190,7 @@ the eigenvectors and their corresponding eigenvalues for the following matrices:
 }
 First some definitions:
 \begin{align}
-    U & = (\mu_1, \mu_2 ... \mu_n) \\
+U & = (u_1, u_2 ... u_n) \\
     \Lambda_a & = diag(\alpha_1,\alpha_2...\alpha_n) \\
     \Lambda_b & = diag(\beta_1,\beta_2...\beta_n) \\
     A & = U\Lambda_aU^T\\
@@ -444,7 +444,7 @@ Part b:\\
 But $\1\{X_i \leq x\}$ describes a binomial draw so:
 \begin{align}
    \E[ ( \widehat{F}_n(x) - F(x) )^2 ] & = \frac{1}{n^2} Var( B(n, F(x)) ) \\
-    & = \frac{1}{n^2} n F(x)(1-F(x)) \text{, becasue Var(Bino(n,p))=np(1-p) } \\
+    & = \frac{1}{n^2} n F(x)(1-F(x)) \text{, because Var(Bino(n,p))=np(1-p) } \\
     & = \frac{F(x)(1-F(x))}{n}  \\
 \end{align}
 
