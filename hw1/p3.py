@@ -71,6 +71,22 @@ def load_data():
 
 	return(X_train, labels_train, X_test, labels_test)
 
+def splitTrainTest(X, Y):
+	num = X.shape[0]	
+	test_idx = np.random.random_integers(0, high=num-1, size=int(num*.2))		
+	mask = np.zeros(num, dtype=bool)
+	mask[test_idx] = True
+	X_test = X[mask, :]
+	Y_test = Y[mask, :]
+	
+	X_train = X[~mask, :]
+	Y_train = Y[~mask, :]
+	
+	return(X_test, Y_test, X_train, Y_train)
+
+
+def moveToCos(X_test, X_train, p):
+
 
 #
 # load / save
@@ -94,6 +110,19 @@ p_train = predict(X_train, w_hat)
 
 a_test = accuracy(p_test, labels_test)
 a_train = accuracy(p_train, labels_train)
+print("Test accuracy:{:.03f}\nTrain accuracy:{:.03f}".format(a_test, a_train))
+
+
+#
+# Part d
+#
+X_test, Y_test, X_train, Y_train = splitTrainTest(X_train, labels_train)
+w_hat = train(X_train, Y_train, L)
+p_test = predict(X_test, w_hat)
+p_train = predict(X_train, w_hat)
+
+a_test = accuracy(p_test, Y_test)
+a_train = accuracy(p_train, Y_train)
 print("Test accuracy:{:.03f}\nTrain accuracy:{:.03f}".format(a_test, a_train))
 
 
