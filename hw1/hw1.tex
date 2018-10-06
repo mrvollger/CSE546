@@ -1,7 +1,7 @@
 
 \documentclass{article}
 
-
+\usepackage{listings}
 \usepackage{amsmath,amsfonts,amsthm,amssymb,amsopn,bm}
 % \usepackage{fullpage}
 \usepackage[margin=.9in]{geometry}
@@ -59,6 +59,7 @@
 \title{Homework \#1}
 \author{\normalsize{CSE 546: Machine Learning}\\
 \normalsize{Prof. Kevin Jamieson} \\
+\normalsize{Student: Mitchell Vollger} \\
 \normalsize{Due: 10/18/18  11:59 PM}}
 \maketitle
 
@@ -84,15 +85,12 @@ For each $i=1,2,3$ on a separate plot:
 For each plot, make sure the limits of the plot are square around the origin (e.g., $[-c,c] \times [-c,c]$ for some $c > 0$).
 
 
-
+\subsection{ Q1 Answer}
+The three plots can be found below. And below that, the code used to generate the plots. For some reason the ticks are not symmetric on the third plot, but if you check the code it is clear that each axis has the same limits. 
 \begin{center}
-    
-\includegraphics[width=7in]{P1.pdf}
-
+\includegraphics[width=\textwidth]{P1.pdf}
 \end{center}
-
-
-
+\lstinputlisting[language=python]{p1.py}
 
 
 
@@ -107,6 +105,19 @@ Unless otherwise specified, if $P$ is a probability distribution and $x_1,\dots,
 
 2. \grade{1}  Let $x_1,\dots,x_n \sim \text{uniform}(0,\theta)$ for some $\theta$. What is the Maximum likelihood estimate for $\theta$?\\
 
+
+
+
+
+\subsection{Q2 Answer}
+
+
+
+
+
+
+
+
 3. \grade{2} Let $(x_1,y_1),\dots,(x_n,y_n)$ be drawn at random from some population where each $x_i \in \R^d$, $y_i \in \R$, and let $\widehat{w} = \arg\min_w \sum_{i=1}^n (y_i - w^T x_i)^2$.
 Suppose we have some test data $(\widetilde{x}_1,\widetilde{y}_1),\dots,(\widetilde{x}_m,\widetilde{y}_m)$ drawn at random from the population as the training data. 
 If $R_{tr}(w) = \frac{1}{n} \sum_{i=1}^n (y_i - w^T x_i)^2$ and $R_{te}(w) = \frac{1}{m} \sum_{i=1}^m (\widetilde{y}_i - w^T \widetilde{x}_i)^2$. Prove that 
@@ -114,6 +125,20 @@ If $R_{tr}(w) = \frac{1}{n} \sum_{i=1}^n (y_i - w^T x_i)^2$ and $R_{te}(w) = \fr
 \E[ R_{tr}(\widehat{w}) ] \leq \E[ R_{te}(\widehat{w}) ]
 \end{align*}
 where the expectations are over all that is random in each expression. Do not assume any model for $y_i$ given $x_i$ (e.g., linear plus Gaussian noise). [This is exercise 2.9 from HTF, originally from Andrew Ng.]\\
+
+
+\subsection{Q3 Answer}
+
+
+
+
+
+
+
+
+
+
+
 
 4.  \grade{8} Let random vector $X \in \R^d$ and random variable $Y \in \R$ have a joint distribution $P_{XY}(X,Y)$. 
 Assume $\E[X]=0$ and define $\Sigma = \text{Cov}(X)=\E[(X-\E[X])(X-\E[X])^T]$ with eigenvalues $\alpha_1 \geq \alpha_2 \geq \dots \geq \alpha_d$ and orthonormal eigenvectors $v_1,\dots,v_d$ such that $\Sigma = \sum_{i=1}^d \alpha_i v_i v_i^T$.
@@ -171,6 +196,18 @@ Justify all answers.
     \item As $\lambda$ increases, how does the bias and variance terms behave?
      
 \end{enumerate}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 \section{Programming: Ridge Regression on MNIST}
@@ -248,5 +285,64 @@ Report $E_{test}$ and the confidence interval.
 
 
 \end{enumerate}
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Q5a Answer}
+
+Re write equaiton in matrix form:
+\begin{align*}
+\widehat{W} & = \text{argmin}_{W \in \R^{d \times k}} \sum_{i=0}^{n} \| W^Tx_{i} - y_{i} \|^{2}_{2} + \lambda \|W\|_{F}^{2} \\
+& = \text{argmin}_W \| X_w - Y \|_2^2 + \lambda \|w\|_2^2 \\
+\end{align*}
+Take the derivative:
+\begin{align*}
+    \nabla_{W} & = 2 X^t(X W -Y) + 2 \lambda W \\
+    2 X^t(X\widehat{W} -Y) + 2 \lambda \widehat{W} & = 0 \\
+    X^T(X\widehat{W} -Y) + \lambda \widehat{W} & = 0 \\
+    X^TX\widehat{W} + \lambda \widehat{W} & = X^T Y \\
+    (X^TX + \lambda I ) \widehat{W} & = X^T Y \\
+     \widehat{W} & =(X^TX + \lambda I )^{-1} X^T Y \\
+\end{align*}
+
+
+\subsection{Q5b Answer}
+See code for a function called "hotones". 
+
+\subsection{Q5c Answer}
+See code for train and predict functions. \\
+The train accuracy was: 85.2\% \\
+The test accuracy was: 85.3\% \\
+
+\subsection{Q5d Answer}
+Below is a plot showing test accuracy in red and train accuracy in blue as a function of $p$. 
+\begin{center}
+    \includegraphics[width=\textwidth]{hw1/P3.pdf}
+\end{center}
+
+\subsection{Q5e Answer}
+
+\begin{align*}
+\P\left( \left| \left(\frac{1}{m} \sum_{i=1}^m X_i\right) - \mu \right| \geq \sqrt{\frac{\log(2/\delta)}{2m}} \right) & \leq \delta \\
+\P\left( \left| \left(\frac{1}{m} \sum_{i=1}^m X_i\right) - \mu \right| \leq \sqrt{\frac{\log(2/\delta)}{2m}} \right) & \geq 1 - \delta \\
+\P\left( \left| E_{test} - \E[E_{test}] \right| \leq \sqrt{\frac{\log(2/0.05)}{2m}} \right) & \geq 0.95 \\
+\P\left( E_{test} - \sqrt{\frac{\log(2/0.05)}{2m}} \leq  \E[E_{test}]  \leq E_{test} + \sqrt{\frac{\log(2/0.05)}{2m}} \right) & \geq 0.95 \\
+\end{align*}
+
+I found that $E_{test}=0.9505$ was highest for the largest value of $p$ I could run, $p=5900$. 
+The confidence interval around this value was:
+$$ 0.9375 < \E[E_test] < 0.9635	$$
+See my code for details of the calculation. 
+
+\subsection{Q5 Code}
+\lstinputlisting[language=python]{p3.py}
 
 \end{document}
