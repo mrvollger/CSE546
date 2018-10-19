@@ -60,6 +60,7 @@
 \author{\normalsize{CSE 546: Machine Learning}\\
 \normalsize{Prof. Kevin Jamieson} \\
 \normalsize{Student: Mitchell Vollger} \\
+\normalsize{Collaborators: April Lo, Anna Minkina, David Read, Eliah Overbey} \\
 \normalsize{Due: 10/18/18  11:59 PM}}
 \maketitle
 
@@ -136,25 +137,32 @@ where the expectations are over all that is random in each expression. Do not as
 
 \begin{align}
     E[R_{tr}(\hat{w})] & = E[1/n \sum_{i=1}^n (y_i - \hat{w}^T x_i)^2] \\
-    & \text{ All draws are iid so the expectation of the average of draws is the same} \\
-    & \text{ as the expectation for one draw} \\
-    & = E[ (y_i - \hat{w}^T x_i)^2 ] \\
+    & \text{Because of linarity of expectations} \\
+    & = 1/n \sum_{i=1}^n E[(y_i - \hat{w}^T x_i)^2] \\
+    & \text{ All draws are iid so they have the same expectation} \\
+    & = 1/n * n E[ (y_i - \hat{w}^T x_i)^2 ] \\
+    & =  E[ (y_i - \hat{w}^T x_i)^2 ] \\
 \end{align}
-A similar argument can be made for the test data. 
+This equality is true no mater the value of $n$ thus once we make a similar argument for $E[R_{te}(\hat{w})]$ we can compare the two without thinking about the differences in sizes.
 \begin{align}
-    E[R_{te}(\hat{w})] & = E[1/m \sum_{i=1}^m (\~y_i - \hat{w}^T \~x_i)^2] \\
-    & = E[ (\~y_i - \hat{w}^T \~x_i)^2 ] \\
+    E[R_{te}(\hat{w})] & = E[1/m \sum_{i=1}^m (\widetilde{y}_i - \hat{w}^T \widetilde{x}_i)^2] \\
+    & = E[ (\widetilde{y}_i - \hat{w}^T \widetilde{x}_i)^2 ] \\
 \end{align}
 Thus we need to show that:
 \begin{align}
-       E[ (y_i - \hat{w}^T x_i)^2 ] & \leq E[ (\~y_i - \hat{w}^T \~x_i)^2 ] \\
+       E[ (y_i - \hat{w}^T x_i)^2 ] & \leq E[ (\widetilde{y}_i - \hat{w}^T \widetilde{x}_i)^2 ] \\
 \end{align}
-However $\hat{w}$ was chosen to minimize this exact function, $(y_i - \hat{w}^T x_i)^2$, so .
+However $\hat{w}$ was chosen to minimize this exact function $(y_i - \hat{w}^T x_i)^2$, and not this function $(\widetilde{y}_i - \hat{w}^T \widetilde{x}_i)^2$. Therefore intuitively we can expect $E[R_{tr}(\hat{w})]$ to be the smaller value. 
 
+Imagine a $\widetilde{w}$ that minimized the error of $E[R_{te}(\widetilde{w})]$. Then we can certainly argue that: 
 
+$$ E[R_{te}(\widetilde{w}) ] \leq E[R_{te}(\hat{w})] $$
+Since $\widetilde{w}$ is optimized for this function. 
 
-
-
+But we know from the first step since $x$ and $y$ are drawn from the same distribution regardless of whether it is test or train, and that the number of samples drawn doesn't matter for the expectation: 
+$$ E[R_{tr}(\hat{w}) ] =  E[R_{te}(\widetilde{w})] $$ 
+Thus we know that:
+$$ E[R_{tr}(\hat{w})] \leq E[R_{te}(\hat{w})] $$ \\
 
 
 4.  \grade{8} Let random vector $X \in \R^d$ and random variable $Y \in \R$ have a joint distribution $P_{XY}(X,Y)$. 
@@ -218,7 +226,7 @@ Justify all answers.
 Re writing the equation in matrix form:
 \begin{align*}
 \widehat{w} & = \text{argmin}_{w} \sum_{i=0}^{n} \| w^Tx_{i} - y_{i} \|^{2}_{2} + \lambda \|w\|_{2}^{2} \\
-& = \text{argmin}_w \| X_w - Y \|_2^2 + \lambda \|w\|_2^2 \\
+& = \text{argmin}_w \| X w - Y \|_2^2 + \lambda \|w\|_2^2 \\
 \end{align*}
 Take the derivative:
 \begin{align*}
@@ -275,7 +283,41 @@ Let $R=(\mat{X}^T\mat{X} + \lambda I)^{-1} =(n\Sigma + \lambda I)^{-1} $
 \end{align}
 
 
+\subsection{Q4e Answer}
+\subsection{Q4f Answer}
 
+From part c we know:
+$$\E_{Y|X,\mc{D}}\big[(Y-\widehat{f}_{\mc{D}}(X))^2 |X=x \big] = \underbrace{\E_{Y|X}[ (Y-\eta(x))^2 | X=x]}_{\text{Irreducible error}} + \underbrace{(\eta(x)-\E_{\mc{D}}[\widehat{f}_{\mc{D}}(x)])^2}_{\text{Bias-squared}} +
+          \underbrace{\E_{\mc{D}}[ ( \E_{\mc{D}}[\widehat{f}_{\mc{D}}(x)] - \widehat{f}_{\mc{D}}(x))^2]}_{\text{Variance}} $$
+    
+Using the assumptions we made in c,d and e this expression can be transformed to :
+$$\E_{Y|X,\mc{D}}\big[(Y-\widehat{f}_{\mc{D}}(X))^2 |X=x \big] = \underbrace{\sigma^2}_{\text{Irreducible error}} + \underbrace{\frac{\lambda^2 \alpha_1 \|w\|_2^2}{(n \alpha_1 + \lambda)^2}}_{\text{Bias-squared}} +
+          \underbrace{\frac{d \sigma^2 \alpha_1^2 n}{(\alpha_1 n + \lambda)^2}}_{\text{Variance}} $$
+    
+The $\lambda^*$ that equalizes the bias and variance terms will be the one that minimizes the expression because the irreducible error... cannot be reduced.
+\begin{align}
+    \frac{\lambda^2\alpha_1\|w\|_2^2}{(\alpha_1 n + \lambda)^2} &= \frac{d\sigma^2 \alpha_1^2 n}{(\alpha_1 n 
+    \lambda)^2}\\
+    \lambda^2\alpha_1\|w\|_2^2 &= d\sigma^2\alpha_1^2 n\\
+    \lambda^2\|w\|_2^2 &= d\sigma^2\alpha_! n\\
+    \lambda^* &= \left(\frac{d\sigma^2\alpha_1 n}{\|w\|_2^2}\right)^{1/2}
+\end{align}
+
+As $d$ increases the complexity increases so $\lambda^*$ increases to correct for the complexity. \\
+$\sigma^2$ is the general variance of the data. It makes sense penalize large values of $w$ when the variance is high, as a observation could give a very different result if the data variance is high and $w$ is large. \\
+$\alpha_1$ are the eigenvalues of the variance, and thus affect the magnitude of the variance. Therefore it affects the $\lambda^*$ in a similar way as $\sigma^2$. \\
+As $n$ increases $\lambda^*$ increases to penalize over fitting of the data and complexity of the model. \\
+$\|w\|_2$ is inverse to $\lambda^*$ so if $\|w\|_2$ is large and stable it encourages little regularization. \\
+    
+
+
+\subsection{Q4g Answer}
+
+
+\subsection{Q4h Answer}
+In the case of the bias squared as $\lambda$ becomes large the expression goes to $\alpha_1 \|w\|^2_2$. Thus as $\lambda$ increases the bias becomes controlled by the norm of $w$. \\
+
+In the case of the variance there is no counter acting lambdas in the numerator and the denominator so the variance jsut decreases. 
 
 
 \section{Programming: Ridge Regression on MNIST}
@@ -366,21 +408,21 @@ Report $E_{test}$ and the confidence interval.
 
 \subsection{Q5a Answer}
 
-Re writing the equation in matrix form:
+Re writing the equation in matrix form can be done by writing it as another Forbenius norm:
 \begin{align*}
 \widehat{W} & = \text{argmin}_{W \in \R^{d \times k}} \sum_{i=0}^{n} \| W^Tx_{i} - y_{i} \|^{2}_{2} + \lambda \|W\|_{F}^{2} \\
-& = \text{argmin}_W \| X_w - Y \|_2^2 + \lambda \|w\|_2^2 \\
+& = \text{argmin}_{W \in \R^{d \times k}} \| X W - Y \|_F^2 + \lambda \|W\|_F^2 \\
 \end{align*}
 Take the derivative:
 \begin{align*}
-    \nabla_{W} & = 2 X^t(X W -Y) + 2 \lambda W \\
-    2 X^t(X\widehat{W} -Y) + 2 \lambda \widehat{W} & = 0 \\
+    \nabla{W} & = 2 X^T(X W -Y) + 2 \lambda W \\
+    2 X^T(X\widehat{W} -Y) + 2 \lambda \widehat{W} & = 0 \\
     X^T(X\widehat{W} -Y) + \lambda \widehat{W} & = 0 \\
     X^TX\widehat{W} + \lambda \widehat{W} & = X^T Y \\
     (X^TX + \lambda I ) \widehat{W} & = X^T Y \\
      \widehat{W} & =(X^TX + \lambda I )^{-1} X^T Y \\
 \end{align*}
-
+Thus we have found a solution for $\widehat{W}$. \\
 
 \subsection{Q5b Answer}
 See code for a function called "hotones". 
@@ -391,7 +433,7 @@ The train accuracy was: 85.2\% \\
 The test accuracy was: 85.3\% \\
 
 \subsection{Q5d Answer}
-Below is a plot showing test accuracy in red and train accuracy in blue as a function of $p$. 
+Below is a plot showing test error in red and train error in blue as a function of $p$. 
 \begin{center}
     \includegraphics[width=\textwidth]{hw1/P3.pdf}
 \end{center}
@@ -404,10 +446,11 @@ Below is a plot showing test accuracy in red and train accuracy in blue as a fun
 \P\left( \left| E_{test} - \E[E_{test}] \right| \leq \sqrt{\frac{\log(2/0.05)}{2m}} \right) & \geq 0.95 \\
 \P\left( E_{test} - \sqrt{\frac{\log(2/0.05)}{2m}} \leq  \E[E_{test}]  \leq E_{test} + \sqrt{\frac{\log(2/0.05)}{2m}} \right) & \geq 0.95 \\
 \end{align*}
+% CI is: 0.0227 < E[E_test] < 0.0498      E_test:0.0363   p_hat:14000     plustminus:0.013581015157406196
 
-I found that $E_{test}=0.9505$ was highest for the largest value of $p$ I could run, $p=5900$. 
+I found that $E_{test}=0.0363$  was lowest for the largest value of $p$ I could run, $p=14000$. 
 The confidence interval around this value was:
-$$ 0.9375 < \E[E_{test}] < 0.9635	$$
+$$ 0.0227 < \E[E_{test}] < 0.0498	$$
 See my code for details of the calculation. 
 
 \subsection{Q5 Code}
