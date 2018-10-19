@@ -70,25 +70,42 @@ def accuracy(p, Y):
 	acc = correct / num
 	return(acc)
 
-def splitTrainTest(X, Y):
-	num = X.shape[0]	
-	test_idx = np.random.random_integers(0, high=num-1, size=int(num*.2))		
-	mask = np.zeros(num, dtype=bool)
-	mask[test_idx] = True
-	X_test = X[mask, :]
-	Y_test = Y[mask, :]
+def kfold(X, Y, k = 5):
+	idx = np.random.permutation(X.shape[0])
+	X_trains = []
+	X_tests = []
+	Y_trains = []
+	Y_tests = []
+	for i in range(k):
+		start = int(i*X.shape[0]/k)
+		end = int((i+1)*X.shape[0]/k)
+		idx_test = idx[start:end]
+		idx_train = np.concatenate( (idx[0:start], idx[end:]) ) 
+		X_trains.append(X[idx_train, :])
+		X_tests.append(X[idx_test, :])
+		Y_trains.append(Y[idx_train, :])
+		Y_tests.append(Y[idx_test, :])
 	
-	X_train = X[~mask, :]
-	Y_train = Y[~mask, :]
+	#for i in range(k):
+	#	print(X_tests[i].shape, Y_tests[i].shape, X_trains[i].shape, Y_trains[i].shape)
+
+	#num = X.shape[0]	
+	#test_idx = np.random.random_integers(0, high=num-1, size=int(num*.2))		
+	#mask = np.zeros(num, dtype=bool)
+	#mask[test_idx] = True
+	#X_test = X[mask, :]
+	#Y_test = Y[mask, :]
+	#X_train = X[~mask, :]
+	#Y_train = Y[~mask, :]
 	
-	return(X_test, Y_test, X_train, Y_train)
+	return(X_tests, Y_tests, X_trains, Y_trains)
 
-
-def moveToCos(X_test, X_train, p):
-	d = X_test.shape[1]
+def GetGandB(p, d):
 	G = np.sqrt(0.1) * np.random.randn(p, d)
 	b = np.random.uniform(low=0, high=2*np.pi, size=p)
-	
+	return(G, b)
+
+def moveToCos(X_test, X_train, G, b):
 	C_test = np.cos( np.transpose(G.dot(np.transpose(X_test))) + b ) 
 	C_train = np.cos( np.transpose(G.dot(np.transpose(X_train)) )+ b ) 
 	return(C_test, C_train)
@@ -122,48 +139,49 @@ print("Test accuracy:{:.03f}\nTrain accuracy:{:.03f}".format(a_test, a_train))
 #
 # Part d
 #
-X_test, Y_test, X_train, Y_train = splitTrainTest(X_train, labels_train)
+X_tests, Y_tests, X_trains, Y_trains = kfold(X_train, labels_train)
 
 # read it in if I have already done it
 if(os.path.exists("crossval.txt")):
-	lines = open("crossval.txt").readlines()
-	ps = []
-	acc_test_p = []
-	acc_train_p = []
-	for line in lines:
-		token = line.strip().split()
-		ps.append(int(token[0]))
-		acc_test_p.append(float(token[1]))
-		acc_train_p.append(float(token[2]))
+	pass
 else:
-	ps = list(range(100, 6000, 100))
-	acc_test_p = []
-	acc_train_p = []
-	for p in ps:
-		C_test, C_train = moveToCos(X_test, X_train, p)
-		w_c = train(C_train, Y_train, L)
-
-		p_test = predict(C_test, w_c)
-		p_train = predict(C_train, w_c)
-
-		a_test = accuracy(p_test, Y_test)
-		a_train = accuracy(p_train, Y_train)
-		acc_test_p.append(a_test)
-		acc_train_p.append(a_train)
-		print("Test accuracy:{:.03f}\tTrain accuracy:{:.03f}\tp:{}".format(a_test, a_train, p))
+	ps = list(range(1000, 14001, 1000))
+	crossval = open("crossval.txt", "w+")
 	
-	rtn = ""
-	for a,b,c in zip(ps, acc_test_p, acc_train_p):
-		rtn += "{}\t{}\t{}\n".format(a,b,c)
-	open("crossval.txt", "w+").write(rtn)
+	for p in ps:
+		G, b =  GetGandB(p, X_train.shape[1] )
+		counter = 1
+		for X_test, X_train, Y_test, Y_train in zip(X_tests, X_trains, Y_tests, Y_trains):
+			C_test, C_train = moveToCos(X_test, X_train, G, b)
+			w_c = train(C_train, Y_train, L)
 
+			p_test = predict(C_test, w_c)
+			p_train = predict(C_train, w_c)
 
+			a_test = accuracy(p_test, Y_test)
+			a_train = accuracy(p_train, Y_train)
 
+			result = "{}\t{}\t{}\t{}\n".format(a_test, a_train, p, counter)
+			print(result[:-1])
+			crossval.write(result)
+			counter += 1
+
+	crossval.close()
+
+results = np.loadtxt("crossval.txt")
 fig, ax = plt.subplots(figsize=(16,9))
-sns.lineplot(ps,acc_test_p, ax = ax, label="test", color="red")
-sns.lineplot(ps, acc_train_p, ax = ax, label = "train", color="blue")
-ax.set_xlabel("p")
-ax.set_ylabel("Accuracy")
+for fold in range(1, 5+1):
+	idx = results[:,3] == fold
+	tbl = results[idx, :]
+	#print(tbl)
+	ps = tbl[:,2]
+	acc_test_p = tbl[:,0]
+	acc_train_p = tbl[:,1]
+	sns.lineplot(ps, 1-acc_test_p, ax = ax, label="test_cv:{}".format(fold), color="red")
+	sns.lineplot(ps, 1-acc_train_p, ax = ax, label = "train_cv:{}".format(fold), color="blue")
+
+ax.set_xlabel("p (complexity)")
+ax.set_ylabel("Error")
 plt.legend()
 sns.despine()
 plt.savefig("P3.pdf")
@@ -174,16 +192,16 @@ plt.savefig("P3.pdf")
 #
 # Part e   
 #
-maxidx = np.argmax(acc_test_p)
-E_test = acc_test_p[maxidx]
-p_hat = ps[maxidx]
+p_hat = 14000
+maxidx = results[:,2] == p_hat
+E_test = 1-np.mean(results[maxidx,0])
 m = X_test.shape[0]
 
 factor = np.sqrt(np.log(2.0/0.05)/(2*m))
 upper = E_test + factor
 lower = E_test - factor
 
-print("CI is: {:.04f} < E[E_test] < {:.04f}\tE_test:{:.04f}\tp_hat:{}".format(lower, upper, E_test, p_hat))
+print("CI is: {:.04f} < E[E_test] < {:.04f}\tE_test:{:.04f}\tp_hat:{}\tplustminus:{}".format(lower, upper, E_test, p_hat, factor))
 
 
 
