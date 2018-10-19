@@ -57,8 +57,7 @@ for idx, u, s, ax in zip(idxs, Us, Ss, axs):
 	# Mutliplying the eigen vectors by the eigen values adjusts them to be length equal to the sqrt or the eigen vlaues
 	# this is because the eigen vecotrs are orthanomal to start (maginitute 1), and because
 	# the length of the arrow scales with the sqrt(eval_1*evector_1) (euclidian distance)
-	print(evals)
-	mag = np.diag(np.sqrt(evals)).dot(np.transpose(evects/np.linalg.norm(evects)))
+	mag = np.diag(evals).dot(np.transpose(evects))
 	
 	ax.arrow(su[0], su[1], mag[0,0], mag[0,1], width = .15, color='red')
 	ax.arrow(su[0], su[1], mag[1,0], mag[1,1], width = .15, color='red')
@@ -66,9 +65,7 @@ for idx, u, s, ax in zip(idxs, Us, Ss, axs):
 	###
 	### Part C ###
 	###
-	#xn = np.sqrt(1./evals).dot(np.transpose(evects))*(x - su)
-	xn = np.sqrt(1.0/evals) * np.transpose( ( np.transpose(evects).dot(np.transpose(x - su)) ) )
-	#print(xn.shape)
+	xn = np.sqrt(1./evals).dot(np.transpose(evects))*(x - su)
 	sns.scatterplot(xn[:,0], xn[:,1], ax=ax, marker = ".", color = 'purple')
 
 	# formatting 
