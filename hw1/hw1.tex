@@ -134,11 +134,22 @@ where the expectations are over all that is random in each expression. Do not as
 
 \subsection{Q3 Answer}
 
-
-
-
-
-
+\begin{align}
+    E[R_{tr}(\hat{w})] & = E[1/n \sum_{i=1}^n (y_i - \hat{w}^T x_i)^2] \\
+    & \text{ All draws are iid so the expectation of the average of draws is the same} \\
+    & \text{ as the expectation for one draw} \\
+    & = E[ (y_i - \hat{w}^T x_i)^2 ] \\
+\end{align}
+A similar argument can be made for the test data. 
+\begin{align}
+    E[R_{te}(\hat{w})] & = E[1/m \sum_{i=1}^m (\~y_i - \hat{w}^T \~x_i)^2] \\
+    & = E[ (\~y_i - \hat{w}^T \~x_i)^2 ] \\
+\end{align}
+Thus we need to show that:
+\begin{align}
+       E[ (y_i - \hat{w}^T x_i)^2 ] & \leq E[ (\~y_i - \hat{w}^T \~x_i)^2 ] \\
+\end{align}
+However $\hat{w}$ was chosen to minimize this exact function, $(y_i - \hat{w}^T x_i)^2$, so .
 
 
 
@@ -211,8 +222,8 @@ Re writing the equation in matrix form:
 \end{align*}
 Take the derivative:
 \begin{align*}
-    \nabla_{w} & = 2 X^t(X w -Y) + 2 \lambda w \\
-    2 X^t(X\widehat{w} -Y) + 2 \lambda \widehat{w} & = 0 \\
+    \nabla_{w} & = 2 X^T(X w -Y) + 2 \lambda w \\
+    2 X^T(X\widehat{w} -Y) + 2 \lambda \widehat{w} & = 0 \\
     X^T(X\widehat{w} -Y) + \lambda \widehat{w} & = 0 \\
     X^TX\widehat{w} + \lambda \widehat{w} & = X^T Y \\
     (X^TX + \lambda I ) \widehat{w} & = X^T Y \\
@@ -222,15 +233,46 @@ Take the derivative:
 
 \subsection{Q4b Answer}
 
+\begin{align}
+    \hat{w} & = (X^TX + \lambda I)^{-1}X^T(Xw + \epsilon) \\
+            & = (X^TX + \lambda I)^{-1}X^TXw + (X^TX + \lambda I)^{-1}X^T \epsilon \\
+            & = (X^TX + \lambda I)^{-1}(X^TX + \lambda I - \lambda I)w + (X^TX + \lambda I)^{-1}X^T \epsilon \\
+            & = w - \lambda(X^TX + \lambda I)^{-1}w + (X^TX + \lambda I)^{-1}X^T \epsilon \\
+\end{align}
 
 
 
+\subsection{Q4c Answer}
+Note we were given that:
+$$\eta(x) = E_{Y|X}[Y|X=x] = x^Tw$$
+Thus:
+\begin{align}
+    E_X[E_{Y|X}[(Y-\eta(x))^2| X = x]] & = E[(x^T w + \epsilon - \eta(x))^2] \\
+    & = E[(x^T w + \epsilon -  E_{Y|X}[Y|X=x])^2 ] \\
+    & = E[(x^T w + \epsilon -  x^T w)^2 ] \\
+    & = E[\epsilon^2 ] \\
+    & = \sigma^2 \\
+\end{align}
 
 
-
-
-
-
+\subsection{Q4d Answer}
+Let $R=(\mat{X}^T\mat{X} + \lambda I)^{-1} =(n\Sigma + \lambda I)^{-1} $
+\begin{align}
+     E_X[(\eta(X) - E_D[\hat{f}_D(X)])^2] & = E_X[(\eta(X) - E_D[(\hat{w}^TX])^2] \\
+    & = E_X[(X^T w -E_D[(w - \lambda R w + R X^T \epsilon)^T X])^2] \\
+    &= E_X[(X^T w - E_D[w^T]X +E_D[(\lambda R w)^T X] + E_D[(RX^T\epsilon)^TX])^2] \\
+    & \text{By our assumptions D does not depend on R so} \\
+    &= E_X[(X^T w - w^TX + (\lambda R w)^T X + E_D[\epsilon]E_D[(RX^T)^TX])^2] \\
+    & \text{The $E[\epsilon] = 0 $ because it is draw from a Gaussian around 0, thus:} \\
+    &= E_X[(0 + (\lambda R w)^T X + 0  E_D[(RX^T)^TX])^2] \\
+    &= E_X[ ((\lambda R w)^T X)^2] \\
+    &=\lambda^2 w^Tw E_X[ ( (R^T X)^2] \\
+    &=\lambda^2 w^Tw R^T R * E_X[XX^T] \\
+    &=\lambda^2 w^Tw R^T R * E_X[(X-0)(X-0)^T] \\
+    &=\lambda^2 w^Tw R^T R * E_X[(X-E(X))(X-E(X))^T] \\
+    & \text{ This final term is just the co-variance. } \\
+    &=\lambda^2 w^Tw R^T R \Sigma \\
+\end{align}
 
 
 
@@ -365,7 +407,7 @@ Below is a plot showing test accuracy in red and train accuracy in blue as a fun
 
 I found that $E_{test}=0.9505$ was highest for the largest value of $p$ I could run, $p=5900$. 
 The confidence interval around this value was:
-$$ 0.9375 < \E[E_test] < 0.9635	$$
+$$ 0.9375 < \E[E_{test}] < 0.9635	$$
 See my code for details of the calculation. 
 
 \subsection{Q5 Code}
