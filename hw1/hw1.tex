@@ -111,10 +111,15 @@ Unless otherwise specified, if $P$ is a probability distribution and $x_1,\dots,
 
 \subsection{Q2 Answer}
 
-
-
-
-
+\begin{align}
+    f(x) & = \frac{1}{\theta} \text{, for } 0 \le x \le \theta \\
+    \implies L(\theta) & = \prod_{i=1}^n \frac{1}{\theta} \\
+    & = \theta^{-n} \\
+    \implies \frac{d}{d\theta} log(L) & = \frac{d}{d\theta} -n log(\theta) \\
+    & = -\frac{n}{\theta} \\
+\end{align}
+$log(L(\theta))$ and therefore also $L(\theta)$ are decreasing functions thus the functions is minimized when $\theta$ is as large as possible. Thus the MLE for $\theta$ is:
+$$\widehat{\theta} = \text{argmax}_x x_1,...,x_n $$ \\
 
 
 
@@ -128,6 +133,7 @@ where the expectations are over all that is random in each expression. Do not as
 
 
 \subsection{Q3 Answer}
+
 
 
 
@@ -196,6 +202,26 @@ Justify all answers.
     \item As $\lambda$ increases, how does the bias and variance terms behave?
      
 \end{enumerate}
+
+\subsection{Q4a Answer}
+Re writing the equation in matrix form:
+\begin{align*}
+\widehat{w} & = \text{argmin}_{w} \sum_{i=0}^{n} \| w^Tx_{i} - y_{i} \|^{2}_{2} + \lambda \|w\|_{2}^{2} \\
+& = \text{argmin}_w \| X_w - Y \|_2^2 + \lambda \|w\|_2^2 \\
+\end{align*}
+Take the derivative:
+\begin{align*}
+    \nabla_{w} & = 2 X^t(X w -Y) + 2 \lambda w \\
+    2 X^t(X\widehat{w} -Y) + 2 \lambda \widehat{w} & = 0 \\
+    X^T(X\widehat{w} -Y) + \lambda \widehat{w} & = 0 \\
+    X^TX\widehat{w} + \lambda \widehat{w} & = X^T Y \\
+    (X^TX + \lambda I ) \widehat{w} & = X^T Y \\
+     \widehat{w} & =(X^TX + \lambda I )^{-1} X^T Y \\
+\end{align*}
+
+
+\subsection{Q4b Answer}
+
 
 
 
@@ -298,7 +324,7 @@ Report $E_{test}$ and the confidence interval.
 
 \subsection{Q5a Answer}
 
-Re write equaiton in matrix form:
+Re writing the equation in matrix form:
 \begin{align*}
 \widehat{W} & = \text{argmin}_{W \in \R^{d \times k}} \sum_{i=0}^{n} \| W^Tx_{i} - y_{i} \|^{2}_{2} + \lambda \|W\|_{F}^{2} \\
 & = \text{argmin}_W \| X_w - Y \|_2^2 + \lambda \|w\|_2^2 \\
