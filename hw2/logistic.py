@@ -106,8 +106,6 @@ def descent(X, Y, w, b, newton=False, eta = 0.5):
 		u = u.reshape((u.shape[0],1))
 		one =  ( (u*(1-u)*Y*Y) )
 		#print("one", one.shape)
-		two = one*X
-		print("two", two.shape)
 		d = X.shape[1]; n = X.shape[0]
 		outer = np.zeros((d,d))
 		for i in range(len(one)):
@@ -211,7 +209,7 @@ X_train, Y_train, X_test, Y_test = load_data()
 #run( X_train, Y_train, X_test, Y_test, "5b", 0.5, 50, batch=X_train.shape[0]) 
 #run( X_train, Y_train, X_test, Y_test, "5c", 0.001, 1, batch=1 ) 
 #run( X_train, Y_train, X_test, Y_test, "5d", 0.01, 10, batch=100 ) 
-run( X_train, Y_train, X_test, Y_test, "5e", 0.5, 10, batch=X_train.shape[0], newton=True) 
+run( X_train, Y_train, X_test, Y_test, "5e", 1, 10, batch=X_train.shape[0], newton=True) 
 
 
 

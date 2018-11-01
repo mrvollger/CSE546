@@ -222,11 +222,12 @@ def Problem4partA(X_train, Y_train, X_val, Y_val, X_test, Y_test, lmax):
 	Ls = []
 	w = np.zeros(d)
 	while L > 0.05:
-		w,b = fitLasso(X_train, Y_train, L, w=w, delta=0.1)
+		w,b = fitLasso(X_train, Y_train, L, w=w, delta=0.25)
 		notzero = (w>0).sum()
 		nonZeros.append( notzero )
 		mse_val = MSE(Y_val, X_val, w, b)
 		mse_train = MSE(Y_train, X_train, w, b)
+		print(mse_val)
 		mses_val.append(mse_val)
 		mses_train.append(mse_train)
 		Ls.append(L)
@@ -267,7 +268,7 @@ def Problem4partA(X_train, Y_train, X_val, Y_val, X_test, Y_test, lmax):
 #
 # Problem 3
 #
-Problem3()
+#Problem3()
 
 #
 # Problem 4
@@ -281,8 +282,8 @@ X_train, Y_train, X_val, Y_val, X_test, Y_test, lmax = Problem4load()
 #prioblem4partb
 # from part A I found that lambda = 1.4618 was the best value I tested
 
-L=1.4618
-w,b = fitLasso(X_train, Y_train, L, delta=0.1)
+L=0.7309
+w,b = fitLasso(X_train, Y_train, L, delta=0.25)
 notzero = (w>0).sum()
 mse_train = MSE(Y_train, X_train, w, b)
 mse_val = MSE(Y_val, X_val, w, b)
@@ -293,9 +294,9 @@ print("Train error:{}\tValidation error:{}\tTest error:{}".format(mse_train, mse
 #
 # Problem 4 part c
 #
-idxs = sorted(range(len(w)), key=lambda i: w[i])[-10:]
-for feat in reversed(featureNames[idxs]):
-	print(feat)
+idxs = list(reversed(sorted(range(len(w)), key=lambda i: w[i])[-10:]))
+for weight, feat in zip(w[idxs], featureNames[idxs]):
+	print("{}:{} \\\\".format(weight, feat))
 
 
 
