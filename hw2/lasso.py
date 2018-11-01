@@ -267,7 +267,7 @@ def Problem4partA(X_train, Y_train, X_val, Y_val, X_test, Y_test, lmax):
 #
 # Problem 3
 #
-#Problem3()
+Problem3()
 
 #
 # Problem 4
@@ -287,14 +287,15 @@ notzero = (w>0).sum()
 mse_train = MSE(Y_train, X_train, w, b)
 mse_val = MSE(Y_val, X_val, w, b)
 mse_test = MSE(Y_test, X_test, w, b)
-print("Train error:{}\tValidation error:{}\tTest error:{}".format(mse_train, mse_test, mse_val))
+print("Train error:{}\tValidation error:{}\tTest error:{}".format(mse_train, mse_val, mse_test))
 
 
 #
 # Problem 4 part c
 #
 idxs = sorted(range(len(w)), key=lambda i: w[i])[-10:]
-print(featureNames[idxs])
+for feat in reversed(featureNames[idxs]):
+	print(feat)
 
 
 

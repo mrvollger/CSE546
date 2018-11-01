@@ -12,6 +12,8 @@ import os
 sns.set()
 sns.set_style("ticks")
 np.random.seed(0)
+L=0.1
+
 
 def load_data():
 	savedf = "data.pkl"
@@ -33,16 +35,25 @@ def load_data():
 			pickle.dump(labels_train, output, pickle.HIGHEST_PROTOCOL)
 			pickle.dump(X_test, output, pickle.HIGHEST_PROTOCOL)
 			pickle.dump(labels_test, output, pickle.HIGHEST_PROTOCOL)
+	
+	# rmeove not 2, 7
+	labels_train = labels_train.astype(np.int16)
+	labels_test = labels_test.astype(np.int16)
 
+	mask = ( (labels_test == 7) | (labels_test == 2) )
+	labels_test = labels_test[mask]
+	X_test = X_test[mask,:]
+	labels_test[labels_test == 7]  = 1
+	labels_test[labels_test == 2]  = -1
+
+	mask = ( (labels_train == 7) | (labels_train == 2) )
+	labels_train = labels_train[mask]
+	X_train = X_train[mask,:]
+	labels_train[labels_train == 7]  = 1
+	labels_train[labels_train == 2]  = -1
+	
+	print(X_train.shape, labels_train.shape, labels_train.sum())
 	return(X_train, labels_train, X_test, labels_test)
-
-
-def hotones(labels):
-	cats = 10 # numer of catigories
-	rtn = np.zeros((len(labels), cats) )
-	rtn[np.arange(len(labels)), labels] = 1
-	return(rtn)
-
 
 # X=data, Y=labels, L=lambda
 def train(X, Y, L):
@@ -55,20 +66,6 @@ def train(X, Y, L):
 	b = np.transpose(X).dot(Y)
 	w_hat = la.solve(a, b)
 	return(w_hat)
-
-
-def predict(X, W):
-	p = X.dot(W)
-	p = np.argmax(p, axis=1)
-	return(p)
-
-
-def accuracy(p, Y):
-	num = Y.shape[0]
-	guess = Y[np.arange(num), p] # selects the indexes where we think the label is
-	correct = guess.sum() *1.0
-	acc = correct / num
-	return(acc)
 
 def kfold(X, Y, k = 5):
 	idx = np.random.permutation(X.shape[0])
@@ -86,124 +83,128 @@ def kfold(X, Y, k = 5):
 		Y_trains.append(Y[idx_train, :])
 		Y_tests.append(Y[idx_test, :])
 	
-	#for i in range(k):
-	#	print(X_tests[i].shape, Y_tests[i].shape, X_trains[i].shape, Y_trains[i].shape)
-
-	#num = X.shape[0]	
-	#test_idx = np.random.random_integers(0, high=num-1, size=int(num*.2))		
-	#mask = np.zeros(num, dtype=bool)
-	#mask[test_idx] = True
-	#X_test = X[mask, :]
-	#Y_test = Y[mask, :]
-	#X_train = X[~mask, :]
-	#Y_train = Y[~mask, :]
-	
 	return(X_tests, Y_tests, X_trains, Y_trains)
 
-def GetGandB(p, d):
-	G = np.sqrt(0.1) * np.random.randn(p, d)
-	b = np.random.uniform(low=0, high=2*np.pi, size=p)
-	return(G, b)
-
-def moveToCos(X_test, X_train, G, b):
-	C_test = np.cos( np.transpose(G.dot(np.transpose(X_test))) + b ) 
-	C_train = np.cos( np.transpose(G.dot(np.transpose(X_train)) )+ b ) 
-	return(C_test, C_train)
-
-
-#
-# load / save
-#
-X_train, labels_train, X_test, labels_test = load_data()
-
-
-#
-# Part B
-#
-labels_train = hotones(labels_train)
-labels_test = hotones(labels_test)
-
-#
-# Part C
-#
-L= 10**(-4)
-w_hat = train(X_train, labels_train, L)
-p_test = predict(X_test, w_hat)
-p_train = predict(X_train, w_hat)
-
-a_test = accuracy(p_test, labels_test)
-a_train = accuracy(p_train, labels_train)
-print("Test accuracy:{:.03f}\nTrain accuracy:{:.03f}".format(a_test, a_train))
-
-
-#
-# Part d
-#
-X_tests, Y_tests, X_trains, Y_trains = kfold(X_train, labels_train)
-
-# read it in if I have already done it
-if(os.path.exists("crossval.txt")):
-	pass
-else:
-	ps = list(range(1000, 14001, 1000))
-	crossval = open("crossval.txt", "w+")
+def descent(X, Y, w, b, newton=False, eta = 0.5):
+	# update b 
+	u = 1.0/(1.0+np.exp(-Y*(b + X.dot(w)) ) )
+	db  = (-Y * (1-u)).mean()
+	vb = -db 
+	if(newton):
+		uu = u * (1-u)
+		ddb = (Y * Y * uu ).mean()
+		vb = la.solve(ddb, -db)
+	b += eta * vb
 	
-	for p in ps:
-		G, b =  GetGandB(p, X_train.shape[1] )
-		counter = 1
-		for X_test, X_train, Y_test, Y_train in zip(X_tests, X_trains, Y_tests, Y_trains):
-			C_test, C_train = moveToCos(X_test, X_train, G, b)
-			w_c = train(C_train, Y_train, L)
-
-			p_test = predict(C_test, w_c)
-			p_train = predict(C_train, w_c)
-
-			a_test = accuracy(p_test, Y_test)
-			a_train = accuracy(p_train, Y_train)
-
-			result = "{}\t{}\t{}\t{}\n".format(a_test, a_train, p, counter)
-			print(result[:-1])
-			crossval.write(result)
-			counter += 1
-
-	crossval.close()
-
-results = np.loadtxt("crossval.txt")
-fig, ax = plt.subplots(figsize=(16,9))
-for fold in range(1, 5+1):
-	idx = results[:,3] == fold
-	tbl = results[idx, :]
-	#print(tbl)
-	ps = tbl[:,2]
-	acc_test_p = tbl[:,0]
-	acc_train_p = tbl[:,1]
-	sns.lineplot(ps, 1-acc_test_p, ax = ax, label="test_cv:{}".format(fold), color="red")
-	sns.lineplot(ps, 1-acc_train_p, ax = ax, label = "train_cv:{}".format(fold), color="blue")
-
-ax.set_xlabel("p (complexity)")
-ax.set_ylabel("Error")
-plt.legend()
-sns.despine()
-plt.savefig("P3.pdf")
+	# update w	
+	u = 1.0/(1.0+np.exp(-Y*(b + X.dot(w)) ) )
+	xy = np.multiply(X.T, Y)
+	dw  = (- xy * (1-u)).mean(axis=1) + 2 * L * w
+	vw = -dw 
+	if(newton):
+		Y = Y.reshape((Y.shape[0], 1))
+		u = u.reshape((u.shape[0],1))
+		one = u*(1-u)*Y*Y
+		#print("one", one.shape)
+		two = one * X
+		#print("two", two.shape)
+		three = np.matmul(X.T, two)
+		#print("three", three.shape)
+		ddw = (three + 2 * L * np.identity(three.shape[0]))
+		vw = la.solve(ddw, -dw)
+		#print(vw)
+		#print(vw[0].shape, vw[1].shape)
+	w += eta * vw
+	
+	return(w,b)
+	
+def objective(X, Y, w, b):
+	inside = np.log( 1.0 + np.exp( -Y * (b + X.dot(w)) ) )
+	j = inside.mean() + L * np.linalg.norm(w,ord=2)
 
 
+	pred = b + X.dot(w)
+	pred[pred < 0] = -1
+	pred[pred >= 0 ] = 1
+	correct = np.sum(pred == Y)
+	#print(correct)
+	error = 1.0 - float(correct) / float(X.shape[0])
+
+	return(j, error)
+	
+def makePlots(iters, test_j, train_j, test_e, train_e, name):
+	fig, ax = plt.subplots(figsize=(16,9))
+	sns.lineplot(x=iters, y=test_j, ax=ax, label="Test")
+	sns.lineplot(x=iters, y=train_j, ax=ax, label="Train")
+	ax.set_xlabel("Iteration")
+	ax.set_ylabel("J(w,b)")
+	plt.ylim(min(train_j)-.05, .5)
+	plt.legend()
+	sns.despine()
+	plt.savefig(name + ".objective.pdf")
+	
+	fig, ax = plt.subplots(figsize=(16,9))
+	sns.lineplot(x=iters, y=test_e, ax=ax, label="Test")
+	sns.lineplot(x=iters, y=train_e, ax=ax, label="Train")
+	ax.set_xlabel("Iteration")
+	ax.set_ylabel("Fraction incorrect")
+	plt.ylim(0,.2)
+	plt.legend()
+	sns.despine()
+	plt.savefig(name + ".error.pdf")
 
 
-#
-# Part e   
-#
-p_hat = 14000
-maxidx = results[:,2] == p_hat
-E_test = 1-np.mean(results[maxidx,0])
-m = X_test.shape[0]
 
-factor = np.sqrt(np.log(2.0/0.05)/(2*m))
-upper = E_test + factor
-lower = E_test - factor
+def run(X_train, Y_train, X_test, Y_test, name, eta, itersize, newton=False, batch=0):
+	d=X_train.shape[1]
+	w = np.zeros(d)
+	b = 0
 
-print("CI is: {:.04f} < E[E_test] < {:.04f}\tE_test:{:.04f}\tp_hat:{}\tplustminus:{}".format(lower, upper, E_test, p_hat, factor))
+	iters = []; test_j=[]; train_j=[]; test_e = []; train_e = []
+	j, error = objective(X_train, Y_train, w, b)
+	tj, terror = objective(X_test, Y_test, w, b)
+	test_j.append(tj)
+	train_j.append(j)
+	test_e.append(terror)
+	train_e.append(error)
+	iters.append(0)
+	
+	
+	# looping over total training data set
+	i = 1
+	for dataloop in range(0,itersize):
+		n = X_train.shape[0]
+		idx = np.random.permutation(n)
+		X_train = X_train[idx]
+		Y_train = Y_train[idx]
+		split = n/batch
+		Xs = np.array_split(X_train, split)	
+		Ys = np.array_split(Y_train, split)
+		#print(split, len(Xs))
+		
+		# looping over a subset for stochastic gradient decent 
+		for X_split, Y_split in zip(Xs, Ys):
+			w, b = descent(X_split, Y_split, w, b, newton=newton, eta=eta)
+			j, error = objective(X_train, Y_train, w, b)
+			tj, terror = objective(X_test, Y_test, w, b)
+			
+			test_j.append(tj)
+			train_j.append(j)
+			test_e.append(terror)
+			train_e.append(error)
+			iters.append(i)
+			if(i % 100 == 0 or split == 1):
+				print(j, error, i, dataloop, X_split.shape)
+			i += 1
+		
+	makePlots(iters, test_j, train_j, test_e, train_e, name)
 
 
+X_train, Y_train, X_test, Y_test = load_data()
+#run( X_train, Y_train, X_test, Y_test, "5b", 0.5, 50, batch=X_train.shape[0]) 
+#run( X_train, Y_train, X_test, Y_test, "5c", 0.001, 1, batch=1 ) 
+#run( X_train, Y_train, X_test, Y_test, "5d", 0.01, 10, batch=100 ) 
+run( X_train, Y_train, X_test, Y_test, "5e", 1, 100, batch=X_train.shape[0], newton=True) 
 
 
 
