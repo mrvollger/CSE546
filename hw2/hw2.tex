@@ -1,4 +1,5 @@
 \documentclass{article}
+\usepackage{listings}
 
 
 \usepackage{amsmath,amsfonts,amsthm,amssymb,amsopn,bm}
@@ -50,7 +51,8 @@
 \begin{document}
 \title{Homework \#2}
 \author{\normalsize{CSE 546: Machine Learning}\\
-\normalsize{Prof. Kevin Jamieson} \\
+\normalsize{Mitchell Vollger} \\
+\normalsize{Collaborators: April Lo, David Reed, Anna Minkina} \\
 \normalsize{Due: 11/1/2018  11:59 PM}}
 \maketitle
 
@@ -210,6 +212,7 @@ Before you get started, here are some hints that you may find helpful:
 \end{itemize}
 
 
+
 3. \grade{5}  We will first try out your solver with some synthetic data.
 A benefit of the Lasso is that if we believe many features are irrelevant for predicting ${y}$, the Lasso can be used to enforce a sparse solution, effectively differentiating between the relevant and irrelevant features.
 Suppose that ${x} \in \mathbb{R}^d, y \in \mathbb{R}, k < d$, and pairs of data $({x}_i, y_i)$ for $i=1,\dots,n$ are generated independently according to the model $y_i = w^T x_i + \epsilon_i$ where
@@ -231,6 +234,44 @@ With this model in mind, let $n = 500, d = 1000, k = 100,$ and $\sigma = 1$.  Ge
 \end{itemize}      
   Comment on the effect of $\lambda$ in these two plots.\\
 
+
+
+
+\section*{Problem 3 Part 1}
+\includegraphics[width=\textwidth]{hw2/P3part1.pdf}
+As Lambda increases the number of non zeros goes down. This is because the regularization term starts to dominate the objective function, forcing the norm of w to because small making most of the w terms zero. 
+
+\section*{Problem 3 Part 2}
+\includegraphics[width=\textwidth]{hw2/P3part2.pdf}
+As lambda does down the FDR or number of false positive non zeros goes up. This is because the regularization term is small and not encouraging zero value w terms.  \\
+
+As lambda goes down the number of true positives (TPR) also goes up because we get increased sensitivity because many w terms are non zero. \\
+
+Ideally TPR would increase much more quickly than FDR, and then we would choose the value of lambda that maximizes the trade-off between TPR and FDR for the application. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section*{}
 4. \grade{5} We'll now put the Lasso to work on some real data from Yelp (an old Kaggle competition, see \url{http://www.kaggle.com/c/yelp-recruiting} for background, but get the data from the class website).
 
 For this competition, the task is to predict the number of useful upvotes a particular review will receive. 
@@ -280,6 +321,74 @@ Each sample is a $(x_i,y_i)$ pair. As a pre-processing step, take the square roo
 
 \subsection{Programming: Binary Logistic Regression}
 
+
+
+
+
+
+
+
+
+\section*{Problem 4 Part a}
+\includegraphics[width=\textwidth]{hw2/{P4partA.2}.pdf}
+\includegraphics[width=\textwidth]{{hw2/P4partA.1}.pdf}
+
+
+\section*{Problem 4 Part b}
+I found that $\lambda = 0.7309$ optimized my validation MSE.\\
+The values I got for train, val, and test were:\\
+Train error:0.42780796536013793 \\
+Validation error:0.3975071173226106 \\
+Test error:0.47285731297083106
+
+\section*{Problem 4 Part c}
+Here are all the weights with the features listed after, and a comment on why it is a predictive weight after that. \\
+18.5018033432417:sqrt(UserCoolVotes*BusinessNumStars) \\
+How positive the review was weighted by the reviewer's reputation. \\ \\
+8.77590786132888:log(ReviewNumCharacters*UserUsefulVotes) \\
+Effort put into the review weighted by the number of people who found it useful. \\ \\
+7.2086619933626945:sqrt(ReviewNumCharacters*UserFunnyVotes) \\
+Similar to above. \\ \\
+6.954594910044081:log(ReviewNumLineBreaks*UserCoolVotes) \\
+Similar to above. \\ \\
+4.731374726088002:sqrt(UserFunnyVotes*BusinessNumStars) \\
+How positive the review was weighted by the reviewer's reputation. \\ \\
+4.534558543784612:sqrt(ReviewNumCharacters*UserCoolVotes) \\
+Effort put into the review weighted by the number of people who found it useful. \\ \\
+3.906770872396257:log(UserUsefulVotes) \\
+Reviewer's reputation. \\ \\
+3.017658610300389:log(UserCoolVotes*BusinessIsOpen) \\
+How many cool upvotes the reviewer has weighted by how often the buissnes is open. \\ \\
+2.132705373968451:sqrt(ReviewNumStars) \\
+Reviewer's opinion. \\ \\
+2.1251692074021182:log(UserFunnyVotes*BusinessNumReviews) \\
+How much the business is reviewed weighted by whether those reviews are good. \\ \\
+
+
+
+
+
+
+
+
+
+
+\section*{Code for problems 3 and 4}
+
+\lstinputlisting[language=python]{hw2/lasso.py}
+
+
+
+
+
+
+
+
+
+
+
+
+\section*{}
 5. \grade{5} Let us again consider the MNIST dataset, but now just binary classification, specifically, recognizing if a digit is a $2$ or $7$.
 Here, let $Y=1$ for all the 7's digits in the dataset, and use $Y=-1$ for $2$.
 We will use use regularized logistic regression. 
@@ -303,6 +412,63 @@ Let $\mu_i(w,b) = \frac{1}{1+ \exp(-y_i (b + x_i^T w))}$.
   \item Repeat (b) using Newton's method.  
 \end{enumerate}
 
+
+
+
+
+
+
+\section*{Problem 5a Answer}
+
+Taking the first derivatives with respect to w and then b. Note if $u = 1/(1+a)$ then $a=(1-u)/u$
+\begin{align*}
+\nabla_w J(w,b) &  = \nabla_w \frac{1}{n} \sum_{i=1}^n \log( 1 + \exp(-y_i (b + x_i^T w))) + \lambda ||w||_2^2 \\
+    &  = \frac{1}{n} \sum_{i=1}^n \nabla_w \log( 1 + \exp(-y_i (b + x_i^T w))) + \nabla_w \lambda ||w||_2^2 \\
+    &  = \frac{1}{n} \sum_{i=1}^n \frac{- y_i x_i \exp(-y_i (b + x_i^T w)) }{ 1 + \exp(-y_i (b + x_i^T w))} + \nabla_w \lambda ||w||_2^2 \\
+    &  = \frac{1}{n} \sum_{i=1}^n \frac{- y_i x_i}{ 1 + \exp(-y_i (b + x_i^T w))}   \left( \exp(-y_i (b + x_i^T w))  \right)  + \nabla_w \lambda ||w||_2^2 \\
+    &  = \frac{1}{n} \sum_{i=1}^n - x_i y_i   \mu_i(w,b)   \left( (1- \mu_i(w,b))/( \mu_i(w,b))  \right)  + \nabla_w \lambda ||w||_2^2 \\
+    &  = \frac{1}{n} \sum_{i=1}^n  -x_i y_i  \left( 1 - \mu_i(w,b) \right)  + 2\lambda w \\
+\text{Derivative} & \text{ with respect to b:} \\    
+\nabla_b J(w,b) &  = \nabla_b \frac{1}{n} \sum_{i=1}^n \log( 1 + \exp(-y_i (b + x_i^T w))) + \lambda ||w||_2^2 \\
+    &  = \frac{1}{n} \sum_{i=1}^n \nabla_b \log( 1 + \exp(-y_i (b + x_i^T w))) + 0 \\
+    &  = \frac{1}{n} \sum_{i=1}^n \frac{- y_i \exp(-y_i (b + x_i^T w)) }{ 1 + \exp(-y_i (b + x_i^T w))} \\
+    & \text{Using the same steps in the previous derivative we can simplify to: } \\
+    &  = \frac{1}{n} \sum_{i=1}^n  -y_i  \left( 1 - \mu_i(w,b) \right)  \\
+\end{align*} 
+
+
+
+Taking the second derivatives with respect to w and then b. 
+\begin{align*}
+\nabla_w^2 J(w,b) &  = \nabla_w \frac{1}{n} \sum_{i=1}^n  -x_i^T y_i    \left( 1 - \mu_i(w,b) \right)  + 2\lambda I\\
+\nabla_w^2 J(w,b) &  =  \frac{1}{n} \sum_{i=1}^n  x_i^T y_i  \nabla_w \mu_i(w,b)  + 2\lambda I\\
+\text{Now calculating } & \nabla_w \mu_i(w,b)\\
+\nabla_w \mu_i(w,b) & = \nabla_w \frac{1}{1+ \exp(-y_i (b + x_i^T w))} \\
+    & = -1 \frac{ \nabla_w  1+ \exp(-y_i (b + x_i^T w)) }{ (1+ \exp(-y_i (b + x_i^T w)))^2 } \\
+    & =  \frac{ x_i^T y_i  \exp(-y_i (b + x_i^T w)) }{ (1+ \exp(-y_i (b + x_i^T w)))^2 } \\
+    & =  x_i^T y_i  \exp(-y_i (b + x_i^T w)) * (\mu_i(w,b))^2  \\
+    & =  x_i^T y_i   \frac{1-\mu_i(w,b)}{\mu_i(w,b)}* (\mu_i(w,b))^2  \\
+    & =  x_i^T y_i  \mu_i(w,b) (1-\mu_i(w,b))  \\
+\text{Thus:} & \\
+\nabla_w^2 J(w,b) &  =  \frac{1}{n} \sum_{i=1}^n  (y_i x_i)(y_i x_i^T)  \mu_i(w,b) (1-\mu_i(w,b)) + 2\lambda I \\
+\end{align*} 
+
+Now with respect to b.
+\begin{align*}
+\nabla_b^2 J(w,b) &  = \nabla_b \frac{1}{n} \sum_{i=1}^n  - y_i    \left( 1 - \mu_i(w,b) \right)  + 0 \\
+    & \text{Using the same steps in the previous derivative we know: } \\
+    &  =  \frac{1}{n} \sum_{i=1}^n  y_i^2   \mu_i(w,b) \left( 1 - \mu_i(w,b) \right) 
+\end{align*} 
+
+
+\section*{Problem 5b Answer}
+\includegraphics[width=\textwidth]{{hw2/P4partA.1}.pdf}
+
+\section*{Problem 5c Answer}
+
+\section*{Problem 5d Answer}
+
+\section*{Problem 5e Answer}
 
 
 \end{document}
