@@ -104,15 +104,22 @@ def descent(X, Y, w, b, newton=False, eta = 0.5):
 	if(newton):
 		Y = Y.reshape((Y.shape[0], 1))
 		u = u.reshape((u.shape[0],1))
-		one = u*(1-u)*Y*Y
+		one =  ( (u*(1-u)*Y*Y) )
 		#print("one", one.shape)
-		two = one * X
-		#print("two", two.shape)
-		three = np.matmul(X.T, two)
-		#print("three", three.shape)
-		ddw = (three + 2 * L * np.identity(three.shape[0]))
+		two = one*X
+		print("two", two.shape)
+		d = X.shape[1]; n = X.shape[0]
+		outer = np.zeros((d,d))
+		for i in range(len(one)):
+			const = one[i] 
+			xi = X[i,:]
+			xit = X.T[:,i]
+			outer += const * np.outer(xi, xit)
+		outer = outer / n
+		print("outer\n",outer, outer.shape)
+		ddw = (outer + 2 * L * np.identity(d))
 		vw = la.solve(ddw, -dw)
-		#print(vw)
+		print(vw.sum())
 		#print(vw[0].shape, vw[1].shape)
 	w += eta * vw
 	
@@ -204,7 +211,7 @@ X_train, Y_train, X_test, Y_test = load_data()
 #run( X_train, Y_train, X_test, Y_test, "5b", 0.5, 50, batch=X_train.shape[0]) 
 #run( X_train, Y_train, X_test, Y_test, "5c", 0.001, 1, batch=1 ) 
 #run( X_train, Y_train, X_test, Y_test, "5d", 0.01, 10, batch=100 ) 
-run( X_train, Y_train, X_test, Y_test, "5e", 1, 100, batch=X_train.shape[0], newton=True) 
+run( X_train, Y_train, X_test, Y_test, "5e", 0.5, 10, batch=X_train.shape[0], newton=True) 
 
 
 
