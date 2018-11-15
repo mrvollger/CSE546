@@ -1,0 +1,115 @@
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+% \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2018
+
+% ready for submission
+\usepackage[final, nonatbib]{nips_2018}
+
+% to compile a preprint version, e.g., for submission to arXiv, add
+% add the [preprint] option:
+% \usepackage[preprint]{nips_2018}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+% \usepackage[final]{nips_2018}
+
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2018}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage[backend=biber, style=numeric, sorting=none]{biblatex}
+\addbibresource{ref.bib}
+
+
+\title{\large{Classifying alignments from duplicated genomic sequence}}
+
+% The \author macro works with any number of authors. There are two
+% commands used to separate the names and addresses of multiple
+% authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to
+% break the lines. Using \AND forces a line break at that point. So,
+% if LaTeX puts 3 of 4 authors names on the first line, and the last
+% on the second line, try using \AND instead of \And before the third
+% author name.
+
+\author{
+  Mitchell R. Vollger
+  %\thanks{Use footnote for providing further
+   % information about author (webpage, alternative
+    %address)---\emph{not} for acknowledging funding agencies.} 
+    \\
+  Department of Genome Sciences\\
+  University of Washington\\
+  \texttt{mvollger@uw.edu} \\
+  %% examples of more authors
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \AND
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+}
+
+\begin{document}
+% \nipsfinalcopy is no longer used
+
+\maketitle
+%%%%-------------------------------------------%%%%%
+%%%% FROM ABOVE HERE CAN USE FOR FINAL PROJECT %%%%%
+%%%%-------------------------------------------%%%%%
+
+\section*{Project Description}
+
+Mammalian genomes contain long stretches of duplicated sequence often spanning more than 100,000 bases \parencite{Lander2001, Waterston2002}. These stretches of high sequence identity are not possible to resolve using common sequencing and assembly strategies because alignments between overlapping DNA sequences in these regions could possibly represent DNA sequences that originate from disparate copies of the duplication \parencite{Pop2004, Chin2016, Gordon2016, Koren2017}. Previous work \parencite{Chaisson2017, Vollger2018} proposed a method for assembling these sequences; however, this method only produces "local" assemblies of duplications that are not ordered and oriented within the context of the rest of the genome assembly.
+
+A goal of my thesis research is to use previously published ultra-long sequencing data \parencite{Jain2018} to order and orient "local" assemblies of duplications in the context of additional genomic sequence. However, before this can be accomplished the alignments between the local assemblies and ultra-long reads need to be classified as either: alignments that are between disparate copies of a duplication (i.e. false alignments), or alignments representing overlaps between the same copy of the duplication (i.e. true alignments). Filtering alignments based on simple statistics such as the percent identity of the alignment has proved insufficient to classify these as true or false alignments, so I propose using machine learning techniques to attempt to classify alignments as true or false. 
+
+\section*{Data sets}
+Using previously published ultra-long sequencing data \parencite{Jain2018} and an internal ultra-long sequencing data I have already generated a data set representing alignments between local assemblies of duplications and ultra-long sequencing data.\\
+\texttt{https://eichlerlab.gs.washington.edu/help/mvollger/CSE546/OntToSDA.nof.bam.tsv} \\
+To create labels for the data set I have aligned both the local assemblies and ultra-long sequencing data to the human reference (which has these regions correctly assembled) and determined whether the alignments I observed in my data set are reflected in the human reference. Combining these I have available to me 4,801 alignments each with true/false labels.  
+
+\section*{Methods}
+I plan on using a variety of machine learning techniques to classify these alignments, including: 
+\begin{enumerate}
+    \item Support Vector Machines (SVMs) \parencite{Hastie2008}
+    \item Random forests \parencite{Ho1995, Breiman2001}
+    \item Gradient boosted decision trees like XGBoost \parencite{Chen2016b} 
+\end{enumerate}
+I am also interested in methods that can extract features from the raw alignments themselves instead of using summary statistics like percent identity, quality score, etc. For example, visualizations of alignments have been used to classify structural variants using convolutional neural nets. Additionally, other methods (e.g. Genetic Programming) may allow me to extract additional features \parencite{Ahmed2014} to help take advantage of the additional dimensions of my data. 
+ 
+\section*{Milestone Goals}
+For the milestone I will have read in more detail all the papers cited in the methods section, and tested at least three classifiers on my data. I also plan to explore how I can include the alignments (i.e. structured features) in the classifiers instead of just summary statistics (unstructured features). 
+
+\section*{Team Members}
+I will be working alone on this project. 
+
+%%%
+%%%  REFERENCES
+%%%
+\printbibliography 
+
+\end{document}
