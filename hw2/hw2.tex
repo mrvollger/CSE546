@@ -52,7 +52,7 @@
 \title{Homework \#2}
 \author{\normalsize{CSE 546: Machine Learning}\\
 \normalsize{Mitchell Vollger} \\
-\normalsize{Collaborators: April Lo, David Reed, Anna Minkina} \\
+\normalsize{Collaborators: April Lo, David Read, Anna Minkina} \\
 \normalsize{Due: 11/1/2018  11:59 PM}}
 \maketitle
 
@@ -73,6 +73,13 @@ For an arbitrary $P_{XY}$, characterize the set of all Bayes Classifiers (i.e., 
 Then propose a deterministic decision rule that is a Bayes classifier.\\
 
 
+
+\section*{Problem 1 answer }
+
+
+
+
+\section*{}
 2. \grade{8} 
 For $i=1,\dots,n$ let $(x_i,y_i) \overset{i.i.d.}{\sim} P_{XY}$ where $y_i \in \{-1,1\}$ and $x_i$ lives in some set $\mathcal{X}$ ($x_i$ is not necessarily a vector). 
 The $0/1$ loss, or \emph{risk}, for a deterministic classifier $f:\mathcal{X} \rightarrow \{ -1,1 \}$ is defined as:
@@ -162,6 +169,90 @@ While more advanced tools (e.g., VC dimension, covering numbers, etc.) are neces
 
 
 
+\section*{Problem 2a Answer}
+Given that the data is iid and a Bernoulli random variable we can use the Hoeffding's inequality, as long as $\Tilde{f}$ does not make the data points not iid. 
+
+\begin{align*}
+    P(|\Hat{R}_n(\Tilde{f}) - R_n(\Tilde{f}) | \leq A ) & \geq 1- \delta  \\
+    -P(|\Hat{R}_n(\Tilde{f}) - R_n(\Tilde{f}) |\leq A ) & \leq  \delta - 1  \\
+    1-P(|\Hat{R}_n(\Tilde{f}) - R_n(\Tilde{f}) | \leq A) & \leq  \delta \\
+    P(|\Hat{R}_n(\Tilde{f}) - R_n(\Tilde{f}) | \geq A) & \leq  \delta \\
+\end{align*}
+This now looks like Hoeffding's inequality with A instead of $\epsilon$. Therefore we can solve for A in the following equation. 
+\begin{align*}
+    \delta & = 2 * exp(\frac{-2 n A^2}{ 1 - 0})\\
+    \log( \delta / 2 )  & = \frac{-2 n A^2}{ 1})\\
+    A^2 & = \frac{1}{ -2n} \log( \delta / 2 ) \\
+    A & = \sqrt{ \frac{1}{2n}) \log( 2/\delta) } \\
+\end{align*}
+
+
+\section*{Problem 2b Answer}
+The inequality holds for any iid Bernoulli random variables and a function that keeps those samples iid. Because $f*$ has not been biased/estimated from that data the same confidence interval must hold, and the same value for A. If $f*$ had been chosen/optimized using the data, this would not be the case. 
+
+\section*{Problem 2c Answer}
+The same confidence interval does not hold because the use of the inequality is not valid in this case. It is not valid because $\Hat{f}$ was created/chosen by using the data. This makes the data biased with $\Hat{f}$ so they are no longer iid. 
+
+
+\section*{Problem 2d Answer}
+Let us pretend that $X$ is totally uninformative of $y$ and that $y$ is just a coin flip with that is $\{-1,1\}$ with equal probability for both outcomes.
+
+Next let the size of $F$ be one, with the one function being k-nearest neighbors with k equal to one. In other words, just define a function such that each set of $X$ coordinates will map to its $y$ label. This perfectly predicts the training data, but will just reflect the randomness of y for new data. \\
+
+Thus the risk on the data will be zero. 
+$$\Hat{R}(\Hat{f})_n = \frac{1}{n} \sum_{i=1}^n 1(\hat{f}(x_i) \ne y_i ) = 0$$
+However, new data points will be classified without any information (because $X$ is not informative) so they will be correct half the time. 
+$$R(\Hat{f}) = E_{xy}[1(\Hat{f}(x) \ne y)] = 1/2 $$
+
+By definition $\hat{f}$ is the argmin of $F$ because it is the only function in $F$. 
+
+
+\section*{Problem 2e Answer}
+
+\section*{Problem 2f Answer}
+It can be bounded by $B$ because in part e it was proven that for any and all $f$ in $F$ we could use the bound $B$. Thus $f$ must also be bounded by $B$. 
+
+\section*{Problem 2g Answer}
+
+\begin{align*}
+    R(\hat{f}) - R(f^*) & \leq C \\
+    R(\hat{f}) - R(f^*) & =   R(\hat{f}) - \Hat{R}_n(\Hat{f}) + \Hat{R}_n(\Hat{f})  - (R(f^*) -\Hat{R}_n(f^*) + \Hat{R}_n(f^*) ) \\
+\end{align*}
+However $\Hat{R}_n(\Hat{f}) - \Hat{R}_n(f^*) ) \leq 0 $, so:\\
+\begin{align*}
+    R(\hat{f}) - \Hat{R}_n(\Hat{f}) + \Hat{R}_n(\Hat{f})  - (R(f^*) -\Hat{R}_n(f^*) + \Hat{R}_n(f^*) ) & \leq 
+    R(\hat{f}) - \Hat{R}_n(\Hat{f})  - (R(f^*) -\Hat{R}_n(f^*)) \\
+    R(\hat{f}) - \Hat{R}_n(\Hat{f})  - (R(f^*) -\Hat{R}_n(f^*)) & \leq |R(\hat{f}) - \Hat{R}_n(\Hat{f})|  + |R(f^*) -\Hat{R}_n(f^*)| \\
+\end{align*}
+But we have shown that for any $f$ both of these terms, $|R(\hat{f}) - \Hat{R}_n(\Hat{f})|$  and $|R(f^*) -\Hat{R}_n(f^*)|$, are bound by $B$ thus together they must be bounded by $2B$. Therefore we can say that we can bound  $R(\hat{f}) - R(f^*) & \leq C$ with $C=2B$.
+
+\section*{Problem 2h Answer}
+
+\section*{Problem 2i Answer}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \section{Programming: Lasso}
 
@@ -175,25 +266,6 @@ For the programming part of this homework, you are required to implement the
 coordinate descent method of Algorithm~\ref{alg:cd} that can solve the Lasso problem.\\
 You may use common computing packages (such as NumPy or SciPy), but do not use an existing Lasso solver (e.g., of Sci-Kit Learn).
 
-\begin{algorithm}[t]
-    \caption{Coordinate Descent Algorithm for Lasso}\label{alg:cd}
-    \While{not converged}{
-      $b \leftarrow \frac{1}{n}\sum_{i=1}^n \left({y}_i - \sum_{j=1}^d {w}_j {x}_{i,j}\right)$\\ 
-      \For{$k \in \{1,2,\cdots d\}$} {
-        $a_k\leftarrow 2 \sum_{i=1}^n {x}_{i,k}^2$ \\   
-        $c_k\leftarrow 2 \sum_{i=1}^n {x}_{i,k} \left({y}_i -(b + \sum_{j\neq k} {w}_j {x}_{i,j} )\right)$ \\
-        ${w}_k \leftarrow 
-        \left\{
-        \begin{array}{ll}
-          (c_k+\lambda) / a_k & c_k < -\lambda\\
-          0 & c_k\in [-\lambda, \lambda]\\
-          (c_k-\lambda) / a_k & c_k > \lambda\\
-        \end{array}  
-        \right.
-        $
-      }
-    }
-\end{algorithm}
 
 Before you get started, here are some hints that you may find helpful:
 \begin{itemize}
@@ -462,13 +534,26 @@ Now with respect to b.
 
 
 \section*{Problem 5b Answer}
-\includegraphics[width=\textwidth]{{hw2/P4partA.1}.pdf}
+\includegraphics[width=\textwidth]{{hw2/5b.objective}.pdf}
+\includegraphics[width=\textwidth]{{hw2/5b.error}.pdf}
 
 \section*{Problem 5c Answer}
+\includegraphics[width=\textwidth]{{hw2/5c.objective}.pdf}
+\includegraphics[width=\textwidth]{{hw2/5c.error}.pdf}
 
 \section*{Problem 5d Answer}
+\includegraphics[width=\textwidth]{{hw2/5d.objective}.pdf}
+\includegraphics[width=\textwidth]{{hw2/5d.error}.pdf}
 
 \section*{Problem 5e Answer}
+\includegraphics[width=\textwidth]{{hw2/5e.objective}.pdf}
+\includegraphics[width=\textwidth]{{hw2/5e.error}.pdf}
+
+
+
+\section*{Problem 5 code}
+\lstinputlisting[language=python]{hw2/logistic.py}
+
 
 
 \end{document}
