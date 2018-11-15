@@ -81,18 +81,18 @@
 %%%% FROM ABOVE HERE CAN USE FOR FINAL PROJECT %%%%%
 %%%%-------------------------------------------%%%%%
 
-\section*{Project Description}
+\section*{Introduction}
 
 Mammalian genomes contain long stretches of duplicated sequence often spanning more than 100,000 bases \parencite{Lander2001, Waterston2002}. These stretches of high sequence identity are not possible to resolve using common sequencing and assembly strategies because alignments between overlapping DNA sequences in these regions could possibly represent DNA sequences that originate from disparate copies of the duplication \parencite{Pop2004, Chin2016, Gordon2016, Koren2017}. Previous work \parencite{Chaisson2017, Vollger2018} proposed a method for assembling these sequences; however, this method only produces "local" assemblies of duplications that are not ordered and oriented within the context of the rest of the genome assembly.
 
-A goal of my thesis research is to use previously published ultra-long sequencing data \parencite{Jain2018} to order and orient "local" assemblies of duplications in the context of additional genomic sequence. However, before this can be accomplished the alignments between the local assemblies and ultra-long reads need to be classified as either: alignments that are between disparate copies of a duplication (i.e. false alignments), or alignments representing overlaps between the same copy of the duplication (i.e. true alignments). Filtering alignments based on simple statistics such as the percent identity of the alignment has proved insufficient to classify these as true or false alignments, so I propose using machine learning techniques to attempt to classify alignments as true or false. 
+A goal of my thesis research is to use previously published ultra-long sequencing data \parencite{Jain2018} to order and orient "local" assemblies of duplications in the context of additional genomic sequence. However, before this can be accomplished the alignments between the local assemblies and ultra-long reads need to be classified as either: alignments that are between disparate copies of a duplication (i.e. false alignments), or alignments representing overlaps between the same copy of the duplication (i.e. true alignments). Filtering alignments based on simple statistics such as the percent identity of the alignment has proved insufficient to classify these as true or false alignments. 
 
-\section*{Data sets}
-Using previously published ultra-long sequencing data \parencite{Jain2018} and an internal ultra-long sequencing data I have already generated a data set representing alignments between local assemblies of duplications and ultra-long sequencing data.\\
+\section*{Data}
+Using previously published ultra-long sequencing data \parencite{Jain2018} and an internal ultra-long sequencing data I have generated a data set representing alignments between local assemblies of duplications and ultra-long sequencing data.\\
 \texttt{https://eichlerlab.gs.washington.edu/help/mvollger/CSE546/OntToSDA.nof.bam.tsv} \\
 To create labels for the data set I have aligned both the local assemblies and ultra-long sequencing data to the human reference (which has these regions correctly assembled) and determined whether the alignments I observed in my data set are reflected in the human reference. Combining these I have available to me 4,801 alignments each with true/false labels.  
 
-\section*{Methods}
+\section*{Preliminary Results and Methods}
 I plan on using a variety of machine learning techniques to classify these alignments, including: 
 \begin{enumerate}
     \item Support Vector Machines (SVMs) \parencite{Hastie2008}
@@ -101,11 +101,8 @@ I plan on using a variety of machine learning techniques to classify these align
 \end{enumerate}
 I am also interested in methods that can extract features from the raw alignments themselves instead of using summary statistics like percent identity, quality score, etc. For example, visualizations of alignments have been used to classify structural variants using convolutional neural nets. Additionally, other methods (e.g. Genetic Programming) may allow me to extract additional features \parencite{Ahmed2014} to help take advantage of the additional dimensions of my data. 
  
-\section*{Milestone Goals}
+\section*{Final Project Goals}
 For the milestone I will have read in more detail all the papers cited in the methods section, and tested at least three classifiers on my data. I also plan to explore how I can include the alignments (i.e. structured features) in the classifiers instead of just summary statistics (unstructured features). 
-
-\section*{Team Members}
-I will be working alone on this project. 
 
 %%%
 %%%  REFERENCES
