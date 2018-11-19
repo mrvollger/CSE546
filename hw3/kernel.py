@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 import numpy as np
-import scipy
+#import scipy
 import scipy.linalg as la
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 #from mnist import MNIST
-import pickle
-import os
+#import pickle
+#import os
 sns.set()
 sns.set_style("ticks")
 np.random.seed(0)
-np.warnings.filterwarnings('ignore')
-
+#np.warnings.filterwarnings('ignore')
+print("Modules Loaded")
 
 
 def load_data(n=30):
@@ -42,39 +42,27 @@ def MSE(f, y):
 	mse = ((f-y)**2).mean()
 	return(mse)
 
-def poly(X, hyper=1):
-	d = hyper
+def poly(x, z, d):
+	k = (1 + x.T.dot(z) )**d
+	return(k)
+
+def rbf(x,z,gamma):
+	norm = np.linalg.norm(x-z, ord=2)**2
+	k = np.exp( -gamma * norm)
+	return(k)
+
+def makeKernel(X, kernel, X2=None, hyper=100):
+	if(X2 is None):
+		X2 = X	
 	n = X.shape[0]
-	K = np.zeros((n,n))
-	for i in range(n):
-		x = X[i,:]
+	m = X2.shape[0]
+	K = np.zeros((m,n))
+	for i in range(m):
+		x = X2[i,:]
 		for j in range(n):
 			z = X[j,:]
-			K[i, j] = (1 + x.T.dot(z) )**d
-
-	#print(K, K.shape)
+			K[i, j] = kernel(x,z,hyper)
 	return(K)
-
-
-def rbf(X, hyper=100):
-	gamma = hyper
-	# ||x-y||^2 = ||x||^2 ||y||^2 - s *x^T*y
-	#X_norm = np.sum(X**2, axis = -1)
-	#Ktest = np.exp(-gamma * (X_norm[:,None] + X_norm[None,:] -2 *np.dot(X, X.T) ) )
-
-	n = X.shape[0]
-	K = np.zeros((n,n))
-	for i in range(n):
-		x = X[i,:]
-		for j in range(n):
-			z = X[j,:]
-			norm = np.linalg.norm(x-z, ord=2)**2
-			#print(norm)
-			K[i, j] = np.exp( -gamma * norm)
-			#print(K[i,j] , Ktest[i, j])
-	#print(K, K.shape)
-	return(K)
-
 
 def kfold(K, y, k = 5):
 	idx = np.random.permutation(K.shape[0])
@@ -98,8 +86,8 @@ def kfold(K, y, k = 5):
 	return(K_trains, y_trains, K_vals, y_vals)
 
 
-def plots(X, fx, y, kernel, hyper, L, p5, p95):
-	K = kernel(X, hyper = hyper)
+def plots(X, fx, y, kernel, hyper, L, x, p5, p95):
+	K = makeKernel(X, kernel, hyper = hyper)
 	alpha = train(K, y, L=L)
 	f = predict(K, alpha)
 	mse = MSE(f, y)
@@ -107,20 +95,21 @@ def plots(X, fx, y, kernel, hyper, L, p5, p95):
 
 	name = "{}_{}.pdf".format(n, kernel.__name__)
 
+	# redefine fx to use more points 
+	fx = 4* np.sin(np.pi * x) * np.cos(6 * np.pi * x**2)
 
 	sns.scatterplot(X[:,0], y[:,0], color="green", label="y_i")
-	sns.lineplot(X[:,0], fx[:,0], label="f(x)")
+	sns.lineplot(x[:,0], fx[:,0], label="f(x)")
 	sns.lineplot(X[:,0], f[:,0], label="f_hat")
 	plt.title(kernel.__name__)
 	plt.legend()	
 	plt.xlabel("x")
 	plt.ylabel("f(x)")
-	
+	plt.ylim(-4.5, 6.5)	
 	# add boostrap 		
-	#sns.lineplot(X[:,0], p5, label="5 conf")
-	#sns.lineplot(X[:,0], p95, label="95 conf")
-	sort = np.argsort(X[:,0])
-	plt.fill_between(X[:,0][sort], p95[sort], p5[sort], color='grey', alpha=0.25)
+	#sns.lineplot(x[:,0], p5, label="5 conf")
+	#sns.lineplot(x[:,0], p95, label="95 conf")
+	plt.fill_between(x[:,0], p5, p95, color='grey', alpha=0.5)
 	plt.savefig(name)
 	
 	plt.clf()
@@ -134,11 +123,11 @@ def DoCV(X, fx, y, kernel, k=10):
 	elif(kernel == poly):
 		hypers = np.arange(1, 100, 2)
 	#print(hypers)
-	Ls = np.float_power( 10, np.arange(-3, 3, .25) )
+	Ls = np.float_power( 10, np.arange(-10, 5, .25) )
 	
 	results = []
 	for hyper in hypers:	
-		K = kernel(X, hyper = hyper)
+		K = makeKernel(X, kernel, hyper = hyper)
 		# leave one out cross validation
 		K_trains, y_trains, K_vals, y_vals =  kfold(K, y, k = k)
 		for L in Ls:
@@ -162,32 +151,64 @@ def DoCV(X, fx, y, kernel, k=10):
 	return(hyper, L)
 
 def bootstrap(X, y, kernel, hyper, L, B=300):
-	n = X.shape[0]	
-	fs = np.zeros((B, n))
+	n = X.shape[0]
+	# make all xs to predict on
+	step = .01
+	x = np.arange(0, 1 + step, step)
+	x = x.reshape(x.shape[0], 1)
+	
+	testn = 40
+	
+	fs = np.zeros((B, x.shape[0]))
 	for i in range(B):
-		Xb = np.random.choice(X[:,0], n).reshape(n, 1)
-		K = kernel(Xb, hyper = hyper)
-		alpha = train(K, y, L=L)
-		f = predict(K, alpha)
+		if(i % 100 == 0 ):
+			print("bootstrap", i)
+		idxs = np.random.choice(n, n)
+		Xb = X[idxs,:]
+		yb = y[idxs,:]
+		K = makeKernel(Xb, kernel, hyper = hyper)
+		alpha = train(K, yb, L=L)
+		
+		kx = makeKernel(Xb, kernel, X2=x, hyper = hyper)
+		f = predict(kx, alpha)
+		#print(f[testn,0])
+		#print(kx.shape, alpha.shape, f.shape)
 		fs[i, :] = f[:,0]
 	#print(fs.shape)
 	
 	p5 = np.percentile(fs, 5, axis=0)
 	p95 = np.percentile(fs, 95, axis=0)
-	print(p5.shape)
-	return(p5, p95)
+
+	#print(fs.shape)
+	#print(np.sort(fs[:,testn]))
+	#print(p5[testn], p95[testn], x[testn])
+	return(x, p5, p95)
 
 
+
+# find best hyper parameters 
+
+hypers = [177.82794100389228, 47, 5.6234, 41]
+Ls = [0.1, 0.316277, 1.778*(10**-12), 0.017782]
+kernels = [rbf, poly, rbf, poly]
+#hypers = None
+
+i=0
 for n in [30, 300]:
 	X, fx, y = load_data(n = n)
-	
-	
-	gamma, L = DoCV(X, fx, y, rbf, k=X.shape[0])
-	p5, p95 = bootstrap(X,y,rbf, gamma, L)
-	plots(X,fx,y,rbf,gamma,L, p5, p95)
-	
-	d, L = DoCV(X, fx, y, poly, k=X.shape[0])
-	p5, p95 = bootstrap(X,y, poly, d, L)
-	plots(X,fx,y,poly,d,L, p5, p95)
+	k = X.shape[0]
+	if(k > 30):
+		k = 10
+	for kernel in [rbf, poly]:
+		if(hypers is None):
+			hyper, L = DoCV(X, fx, y, kernel, k=k)
+		else:
+			hyper = hypers[i]; L = Ls[i]
+		print(hyper, L)
+		# run bootstrap and plot 
+		x, p5, p95 = bootstrap(X,y, kernel, hyper, L)
+		plots(X, fx, y, kernel, hyper, L, x, p5, p95)
+		i += 1
+
 
 

@@ -3,6 +3,7 @@ import numpy as np
 import scipy
 import scipy.linalg as la
 import scipy.sparse.linalg as sla
+from scipy.sparse import csr_matrix
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
@@ -52,8 +53,8 @@ def partA(train, test):
 
 
 def doSVD(X, d):
-	u,s,v  = sla.svds(X, k = d)
-	return(u,s,v)
+	u,s,vt  = sla.svds(X, k = d)
+	return(u,s,vt)
 
 
 
@@ -61,6 +62,7 @@ def doSVD(X, d):
 def partB(train, test):
 	ztrain = train.copy()
 	ztrain[np.isnan(ztrain)] = 0.0
+	ztrain = csr_matrix(ztrain)
 	mse_l = []
 	mae_l = []
 	for d in ds:
@@ -78,6 +80,15 @@ def partB(train, test):
 	plt.savefig("5b.pdf")
 	#print(train)
 	return()
+
+
+def partC(test, train):
+	d = 25
+	u = np.random.rand((n, d))	
+	v = np.random.rand((d, m))
+
+
+
 
 train = load_data("data/train.txt") 
 test = load_data("data/test.txt") 
