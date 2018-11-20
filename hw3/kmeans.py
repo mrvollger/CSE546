@@ -11,7 +11,7 @@ import pickle
 import os
 sns.set()
 sns.set_style("ticks")
-np.random.seed(0)
+np.random.seed(1)
 print("modules loaded")
 
 
@@ -48,7 +48,7 @@ def objfun(alldists, clusters, k):
 	for i in range(k):
 		idxs = (clusters == i)
 		cut = alldists[idxs,i]
-		obj += np.sum(cut)
+		obj += np.sum(np.square(cut))
 	return(obj)
 
 def dists(X, cent):
@@ -57,9 +57,10 @@ def dists(X, cent):
 
 def distMat(X, cents):
 	n = X.shape[0]
-	k = cents.shape[1]
+	k = cents.shape[0]
 	alldists = np.zeros((n,k))
 	for i in range(k):
+		#print(i, k)
 		alldists[:, i] = dists(X, cents[i, :])	
 	return(alldists)
 
@@ -180,6 +181,7 @@ X, y = load_data()
 for k in [5, 10, 20]:
 	print("rand")
 	cents = selStart(X, k=k)
+	print(cents.shape)
 	runlloyd(X, cents)
 	print("kpp")
 	cents = kppStart(X, k=k)
