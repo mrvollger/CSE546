@@ -19,12 +19,14 @@ sns.set_style("ticks")
 np.random.seed(0)
 print("modules loaded")
 from multiprocessing.dummy import Pool as ThreadPool
-pool = ThreadPool(4)
+pool = ThreadPool(8)
 
 m = 100
 n = 24983
 ds=[1,2,5,10,20,50]
-Ls = np.float_power( 10, np.arange(-2, 5) )
+Ls = np.float_power( 10, np.arange(-4,4) )
+#ds = [5]
+#Ls = np.float_power( 10, np.arange(1,2) )
 
 def load_data(myfile):
 	df = np.genfromtxt(myfile, delimiter=',')
@@ -168,7 +170,7 @@ def makeTrainSmaller(train):
 	return(Rrow, Rcol)
 
 def myprint(d, L, mse, mae):
-	print("{}_{}:\tMSE:{}\tMAE:{}".format(d, L, mse, mae))
+	print("{}\t{}:\tMSE:{}\tMAE:{}".format(d, L, mse, mae))
 
 def run_d_l(params):
 	Rrow, Rcol, val, train, d, L = params
@@ -179,7 +181,7 @@ def run_d_l(params):
 	myprint(d, L, mse, mae)
 
 	i = 0
-	thresh = 0.005
+	thresh = 0.01
 	while True:
 		U = updateU(U, VT, Rrow, L)
 		VT = updateVT(U, VT, Rcol, L)
@@ -188,32 +190,40 @@ def run_d_l(params):
 		myprint(d, L, newmse, newmae)
 	
 		# check if I should terminate 
-		if( (np.abs(newmae - mae) < thresh) and (np.abs(newmse - mse) < thresh) ):
+		if( ((i > 2) and (newmse > mse)) or ((np.abs(newmae - mae) < thresh) and (np.abs(newmse - mse) < thresh))):
 			break
 		else:
 			mse = newmse
 			mae = newmae
 		i += 1 
-	return(U, VT, mse, mae)
+	print("done with one!")
+	return(U, VT, mse, mae, d, L)
 
 def makeValidation(train):
-	has_value = ~np.isnan(train)
-	total = np.sum(has_value)
-	valsize = int(total / 5)
-	rowidx, colidx = np.where(has_value)
+	if(False):
+		has_value = ~np.isnan(train)
+		total = np.sum(has_value)
+		valsize = int(total / 5)
+		rowidx, colidx = np.where(has_value)
+		
+		# choose some values for valiation 
+		idxs = np.random.choice(total, size=valsize, replace=False)
+		valrow = rowidx[idxs]
+		valcol = colidx[idxs]
+		
+		# set the val positions and clear the train positions 
+		val = np.full(train.shape, np.nan) 
+		val[valrow, valcol]	 = train[valrow, valcol]
+		train[valrow, valcol] = np.nan
 	
-	# choose some values for valiation 
-	idxs = np.random.choice(total, size=valsize, replace=False)
-	valrow = rowidx[idxs]
-	valcol = colidx[idxs]
 	
-	# set the val positions and clear the train positions 
-	val = np.full(train.shape, np.nan) 
-	val[valrow, valcol]	 = train[valrow, valcol]
-	train[valrow, valcol] = np.nan
-	
+	valrow = np.random.choice(n, size=int(n/5), replace=False)
+	val = np.full(train.shape, np.nan)
+	val[valrow, :] = train[valrow, :]
+	newtrain=train.copy()
+	newtrain[valrow, :] = np.nan
 	#print(total, np.sum(~np.isnan(train)), np.sum(~np.isnan(val)))
-	return(train, val)
+	return(newtrain, val)
 
 def partC(test, train):
 	print("Starting part C")
@@ -227,13 +237,43 @@ def partC(test, train):
 	# make spare matrixs
 	Rrow, Rcol = makeTrainSmaller(train)
 	params = []
-	for d in ds:
-		for L in Ls:
+	for L in Ls:
+		for d in ds:
 			param = (Rrow, Rcol, val, train, d, L)
 			params.append(param)
 	
 	results = pool.map(run_d_l, params)
+	results = pd.DataFrame(results, columns = ["U", "VT", "MSE", "MSA", "d", "L"] )
+	results.to_pickle("partC.pkl")
 	print(results)
+
+def partC2(train, test):
+	results = pd.read_pickle("partC.pkl")
+	results.sort_values(by = ["d", "MSE"] , inplace=True)
+	print(results)
+	results.drop_duplicates(["d"], inplace=True)
+	print(results)
+	
+	mse_t = []; mse_l = []
+	mae_t = []; mae_l = []
+	
+	for idx, row in results.iterrows():
+		predict = row["U"].dot(row["VT"])
+		mse, mae = error(predict, train)
+		mse_l.append(mse) ; mae_l.append(mae)
+
+		mse, mae = error(predict, test)
+		mse_t.append(mse) ; mae_t.append(mae)
+
+	fig, axs = plt.subplots(ncols = 2, figsize=(16,9))
+	sns.lineplot(ds, mse_t, ax = axs[0], label="test"); axs[0].set_xlabel("d"); axs[0].set_ylabel("MSE")
+	sns.lineplot(ds, mae_t, ax = axs[1], label="test"); axs[1].set_xlabel("d"); axs[1].set_ylabel("MAE")
+	
+	sns.lineplot(ds, mse_l, ax = axs[0], label="train"); axs[0].set_xlabel("d"); axs[0].set_ylabel("MSE")
+	sns.lineplot(ds, mae_l, ax = axs[1], label="train"); axs[1].set_xlabel("d"); axs[1].set_ylabel("MAE")
+	plt.savefig("5c.pdf")
+	
+
 
 train = load_data("data/train.txt") 
 test = load_data("data/test.txt") 
@@ -241,6 +281,7 @@ test = load_data("data/test.txt")
 partA(train, test)
 #partB(train, test)
 partC(train, test)
+partC2(train, test)
 
 
 
