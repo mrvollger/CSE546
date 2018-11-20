@@ -175,7 +175,9 @@ def myprint(d, L, mse, mae):
 def run_d_l(params):
 	Rrow, Rcol, val, train, d, L = params
 	U = np.random.rand(n, d)	
+	#U = np.random.uniform(n, d)	
 	VT = np.random.rand(d, m)	
+	#VT = np.random.uniform(d, m)	
 	predict = U.dot(VT)
 	mse, mae = error(predict, val)	
 	myprint(d, L, mse, mae)
@@ -232,11 +234,9 @@ def makeValidation(train):
 	print(np.sum(~np.isnan(train)), np.sum(~np.isnan(newtrain)), np.sum(~np.isnan(val)))
 	return(newtrain, val)
 
-def partC(test, train):
+def partC(train, val, test):
 	print("Starting part C")
 
-	# make a validation set 
-	train, val = makeValidation(train)
 	# show the total error in test and train with jsut guessing zeors acorss the baord 
 	print(error(np.zeros(test.shape), test))
 	print(error(np.zeros(val.shape), val))
@@ -270,6 +270,7 @@ def partC2(train, test):
 		mse_l.append(mse) ; mae_l.append(mae)
 
 		mse, mae = error(predict, test)
+		print(mse, mae, row["d"], row["L"])
 		mse_t.append(mse) ; mae_t.append(mae)
 
 	fig, axs = plt.subplots(ncols = 2, figsize=(16,9))
@@ -284,11 +285,15 @@ def partC2(train, test):
 
 train = load_data("data/train.txt") 
 test = load_data("data/test.txt") 
+print(np.sum(~np.isnan(train)), np.sum(~np.isnan(test)))
+
+newtrain, val = makeValidation(train)
+
 
 partA(train, test)
 #partB(train, test)
-partC(train, test)
-partC2(train, test)
+#partC(newtrain, val, test)
+partC2(newtrain, test)
 
 
 
