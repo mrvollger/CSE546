@@ -19,12 +19,12 @@ sns.set_style("ticks")
 np.random.seed(0)
 print("modules loaded")
 from multiprocessing.dummy import Pool as ThreadPool
-pool = ThreadPool(8)
+pool = ThreadPool(4)
 
 m = 100
 n = 24983
 ds=[1,2,5,10,20,50]
-Ls = np.float_power( 10, np.arange(-4,4) )
+Ls = np.float_power( 10, np.arange(-3,4) )
 #ds = [5]
 #Ls = np.float_power( 10, np.arange(1,2) )
 
@@ -177,7 +177,7 @@ def run_d_l(params):
 	U = np.random.rand(n, d)	
 	VT = np.random.rand(d, m)	
 	predict = U.dot(VT)
-	mse, mae = error(val, predict)	
+	mse, mae = error(predict, val)	
 	myprint(d, L, mse, mae)
 
 	i = 0
@@ -186,21 +186,26 @@ def run_d_l(params):
 		U = updateU(U, VT, Rrow, L)
 		VT = updateVT(U, VT, Rcol, L)
 		predict = U.dot(VT)
-		newmse, newmae = error(val, predict)	
+		newmse, newmae = error(predict, train)	
 		myprint(d, L, newmse, newmae)
 	
 		# check if I should terminate 
-		if( ((i > 2) and (newmse > mse)) or ((np.abs(newmae - mae) < thresh) and (np.abs(newmse - mse) < thresh))):
+		if( ((i > 2) and (newmse > mse)) or 
+			((np.abs(newmae - mae) < thresh) and (np.abs(newmse - mse) < thresh)) or 
+			(i > 20) ):
 			break
 		else:
 			mse = newmse
 			mae = newmae
 		i += 1 
+	
+
+	mse, mae = error(predict, val)	
 	print("done with one!")
 	return(U, VT, mse, mae, d, L)
 
 def makeValidation(train):
-	if(False):
+	if(True):
 		has_value = ~np.isnan(train)
 		total = np.sum(has_value)
 		valsize = int(total / 5)
@@ -214,15 +219,17 @@ def makeValidation(train):
 		# set the val positions and clear the train positions 
 		val = np.full(train.shape, np.nan) 
 		val[valrow, valcol]	 = train[valrow, valcol]
-		train[valrow, valcol] = np.nan
+		newtrain=train.copy()
+		newtrain[valrow, valcol] = np.nan
 	
-	
-	valrow = np.random.choice(n, size=int(n/5), replace=False)
-	val = np.full(train.shape, np.nan)
-	val[valrow, :] = train[valrow, :]
-	newtrain=train.copy()
-	newtrain[valrow, :] = np.nan
-	#print(total, np.sum(~np.isnan(train)), np.sum(~np.isnan(val)))
+	else:	
+		valrow = np.random.choice(n, size=int(n/5), replace=False)
+		val = np.full(train.shape, np.nan)
+		val[valrow, :] = train[valrow, :]
+		newtrain=train.copy()
+		newtrain[valrow, :] = np.nan
+
+	print(np.sum(~np.isnan(train)), np.sum(~np.isnan(newtrain)), np.sum(~np.isnan(val)))
 	return(newtrain, val)
 
 def partC(test, train):
@@ -231,8 +238,8 @@ def partC(test, train):
 	# make a validation set 
 	train, val = makeValidation(train)
 	# show the total error in test and train with jsut guessing zeors acorss the baord 
-	print(error(test, np.zeros(test.shape)))
-	print(error(val, np.zeros(val.shape)))
+	print(error(np.zeros(test.shape), test))
+	print(error(np.zeros(val.shape), val))
 
 	# make spare matrixs
 	Rrow, Rcol = makeTrainSmaller(train)
