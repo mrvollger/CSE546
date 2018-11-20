@@ -12,12 +12,15 @@ import seaborn as sns
 #from mnist import MNIST
 import pickle
 import os
+import pandas as pd
 sns.set()
 sns.set_style("ticks")
 #sns.set_context("paper")
 np.random.seed(0)
 print("modules loaded")
- 
+from multiprocessing.dummy import Pool as ThreadPool
+pool = ThreadPool(4)
+
 m = 100
 n = 24983
 ds=[1,2,5,10,20,50]
@@ -167,7 +170,8 @@ def makeTrainSmaller(train):
 def myprint(d, L, mse, mae):
 	print("{}_{}:\tMSE:{}\tMAE:{}".format(d, L, mse, mae))
 
-def run_d_l(Rrow, Rcol, val, train, d, L):
+def run_d_l(params):
+	Rrow, Rcol, val, train, d, L = params
 	U = np.random.rand(n, d)	
 	VT = np.random.rand(d, m)	
 	predict = U.dot(VT)
@@ -175,6 +179,7 @@ def run_d_l(Rrow, Rcol, val, train, d, L):
 	myprint(d, L, mse, mae)
 
 	i = 0
+	thresh = 0.005
 	while True:
 		U = updateU(U, VT, Rrow, L)
 		VT = updateVT(U, VT, Rcol, L)
@@ -183,7 +188,7 @@ def run_d_l(Rrow, Rcol, val, train, d, L):
 		myprint(d, L, newmse, newmae)
 	
 		# check if I should terminate 
-		if( (i > 2) and (newmse > mse) ):
+		if( (np.abs(newmae - mae) < thresh) and (np.abs(newmse - mse) < thresh) ):
 			break
 		else:
 			mse = newmse
@@ -212,7 +217,6 @@ def makeValidation(train):
 
 def partC(test, train):
 	print("Starting part C")
-	d = 50; L = 10000
 
 	# make a validation set 
 	train, val = makeValidation(train)
@@ -222,10 +226,14 @@ def partC(test, train):
 
 	# make spare matrixs
 	Rrow, Rcol = makeTrainSmaller(train)
+	params = []
+	for d in ds:
+		for L in Ls:
+			param = (Rrow, Rcol, val, train, d, L)
+			params.append(param)
 	
-
-	run_d_l(Rrow, Rcol, val, train, d, L)
-
+	results = pool.map(run_d_l, params)
+	print(results)
 
 train = load_data("data/train.txt") 
 test = load_data("data/test.txt") 
