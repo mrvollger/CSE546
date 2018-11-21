@@ -1,4 +1,5 @@
 \documentclass{article}
+\usepackage{listings}
 
 %  \def\showsolution{1}
 
@@ -53,11 +54,13 @@
 
 \setlength\parindent{0px}
 
+
 \begin{document}
 \title{Homework \#3}
 \author{\normalsize{CSE 546: Machine Learning}\\
-\normalsize{Prof. Kevin Jamieson} \\
-\normalsize{Due: 11/20  11:59 PM}}
+\normalsize{Mitchell Vollger} \\
+\normalsize{Collaborators: April Lo, David Read, Anna Minkina} \\
+\normalsize{Due: 11/20/2018  11:59 PM}}
 \maketitle
 
 
@@ -86,11 +89,209 @@
 You have just derived what is known as Gaussian process regression. 
 For more information, consult Rasmussen and Williams' \textit{Gaussian Processes for Machine Learning} book: \url{http://www.gaussianprocess.org/}.\\ 
 
+\newpage
+\section*{Problem 1 a Answer}
+
+In this problem $C_i$ and $K_i$ will denote constants that we need not keep track of to find  the MAP or MLE.
+
+\begin{align}
+    MSE & = argmax_w \  \prod_{i=1}^{n} P(Y=y | x, w) \\
+    & = argmax_w \    \log( \prod_{i=1}^{n} P(Y=y | x, w) ) \\ 
+    & = argmax_w \     \sum_{i=1}^{n}  \log(P(Y=y | x, w) ) \\
+    & = argmax_w \    \frac{-1}{2\sigma^2} \sum_{i=1}^{n}  (y_i -X^t_i 2)^2  + C_1  \\
+    & = argmin_w \   \sum_{i=1}^{n}  (y_i -X^t_i 2)^2   \\
+    & = argmin_w \   || y - Xw ||^2_2   \\
+\end{align}
+We know we can differentiate this and set it equal to zero to get $MLE=\hat{w}$
+\begin{align}
+    0 = \frac{d}{d\hat{w}}   || y - X\hat{w} ||^2_2   \\
+    0 = -2 X^T ( y - X \hat{w} )   \\
+    X^T X \hat{w} =  X^T  y    \\
+    \hat{w} = (X^T X)^{-1}  X^T  y    \\
+\end{align}
+
+
+
+\section*{Problem 1 b Answer}
+
+\begin{align}
+    MAP & = argmax_w \  P(w | data ) \\
+    & = argmax_w \   p(w)  \prod_{i=1}^{n} P(Y=y | x, w)  \\ 
+    & = argmax_w \  log( p(w) ) + log(   \prod_{i=1}^{n} P(Y=y | x, w)  )  \\
+    & = argmax_w \  log( p(w) ) +   \sum_{i=1}^{n} log( P(Y=y | x, w)  )  \\ 
+    & = argmax_w \  log( p(w) ) + \frac{-1}{2\sigma^2}  || y - Xw ||^2_2  + C_2  \\ 
+    & = argmax_w \  -\frac{1}{2} \frac{||w||_2^2}{ \tau^2 } + C_3 + \frac{-1}{2\sigma^2}  || y - Xw ||^2_2  + C_2  \\ 
+    & = argmin_w \  \frac{||w||_2^2}{ \tau^2 } +  \frac{|| y - Xw ||^2_2}{\sigma^2}    \\ 
+\end{align}
+We know we can differentiate this and set it equal to zero to get $MAP=\hat{w}$
+
+\begin{align}
+    0 & = \frac{d}{d\hat{w}} [  \frac{||w||_2^2}{ \tau^2 } +  \frac{|| y - Xw ||^2_2}{\sigma^2}  ]  \\ 
+    0 & = 2 \frac{\hat{w}}{ \tau^2 } I -  \frac{ 2 X^T (y-X w) }{\sigma^2}  ]  \\ 
+    0 & = \frac{X^Ty}{\sigma^2} + (\frac{1}{\tau^2} I + \frac{X^TX}{\sigma^2}) \hat{w} \\
+    \hat{w} & = (\frac{1}{\tau^2} I + \frac{X^TX}{\sigma^2})^{-1} X^T y
+\end{align}
+
+
+\section*{Problem 1 c Answer}
+Because this is a normal the conjagate prior is usually aslo a normal. So we want something that takes on the following form:
+
+\begin{align}
+    p_{guess}(w) & = C_1 exp(-1/2 (w-\mu)^T \Sigma^{-1} (w - \mu )) \\
+    & = C_1 exp( -1/2 [ w^T \Sigma^{-1} w - 2 u^T\Sigma^{-1} w + u^T\Sigma^{-1} u ]) \\
+    & = C_2 exp( -1/2 [ w^T \Sigma^{-1} w - 2 u^T\Sigma^{-1} w ]) \\
+\end{align}
+
+Now let us see if we can get our distribution inot that form
+
+
+\begin{align}
+    Likelihood & = K_1 exp( -\frac{1}{2\tau} w^Tw ) * K_2 exp(-\frac{1}{2\sigma^2} (y-Xw)^T(y-Xw) ) \\ 
+    & = K_3 exp(-\frac{1}{2} [ \frac{1}{\tau^2} + \frac{1}{\sigma^2} (-2y^TXw + w^TX^Txw) ]) \\
+    & = K_3 exp(-\frac{1}{2} [ w^T ( \frac{1}{\tau^2} I   +\frac{ X^TX}{\sigma^2} ) w  - 2 \frac{1}{\sigma^2} y^T X w) \\
+\end{align}
+
+This now looks like our "guess" so we can substitute in to see what the co-variance and mean must be. 
+$$\Sigma^{-1} = ( \frac{1}{\tau^2} I + \frac{X^TX}{\sigma^2} )$$
+Thus 
+$$\Sigma = ( \frac{1}{\tau^2} I + \frac{X^TX}{\sigma^2} )^{-1} $$
+$$\Sigma = \sigma^2 ( \frac{\sigma^2}{\tau^2} I +X^T X )^{-1} $$
+
+We know the the mean is can be found from the following equation. 
+$$ \mu^T \Sigma^{-1} = y^TX/\sigma^2 $$
+$$ \mu^T = y^TX/\sigma^2 \Sigma  $$
+$$ \mu  =  \Sigma  X^T y /\sigma^2 $$
+$$ \mu  =   ( \frac{\sigma^2}{\tau^2} I +X^T X )^{-1}  X^T y  $$
+
+Since this is just a normal distribution the $E[w|X,y]$ is just the mean. Thus:
+$$ \mu = E[w|X,y] $$
+
+\section*{Problem 1 d Answer}
+Note that without the linear transformation the mean is: 
+$$\mu = E[w]$$
+and the variance is: 
+$$ \Sigma =  Var(w) = E(ww^T) - E(w)^2$$
+
+Now lets try to find $\mu_z$ and $\Sigma_z$.
+$$ \mu_z = E[z^t w] $$
+However $z$ is a set entity so:
+$$ \mu_z = z^T E[w] = z^T \mu $$
+Thus we have shown the transformation of the mean. \\
+
+Now lets find the transformation of the variance. \\
+\begin{align}
+    \Sigma_z & = E[(z^Tw-\mu_z )(z^Tw-\mu_z)^T ] \\
+    & = E[z^T w w^T z ] - E[ \mu_z w^T z ] - E[z^T w \mu_z^T ] + E[\mu_z \mu_z^T ] \\
+    & = E[z^T w w^T z ] - 2  E[z^T w \mu_z^T ] +  \mu_z \mu_z^T  \\
+    & = z^T E[ w w^T  ] z - 2  E[z^T w] \mu_z^T +  \mu_z \mu_z^T  \\
+    & = z^T E[ w w^T  ] z - 2  \mu_z  \mu_z^T +  \mu_z \mu_z^T  \\
+    & = z^T E[ w w^T  ] z - 2  \mu_z  \mu_z^T +  \mu_z \mu_z^T  \\
+    & = z^T E[ w w^T  ] z -  \mu_z \mu_z^T  \\
+    & = z^T E[ w w^T  ] z -  z^T E[w] E[w] z  \\
+    & = z^T ( E[ w w^T  ] - E[w]^2 ) z  \\
+    & = z^T \Sigma  z  \\
+\end{align}
+Thus we have shown the transformation of the variance. \\
+
+
+
+\section*{Problem 1 e Answer}
+
+First I am just going to expand the following term with the provided equation:
+$$ [ \frac{\sigma^2}{\tau^2} I +X^T X ]^{-1}  $$
+With $A=\frac{\sigma^2}{\tau^2} I $, $U=X^T$, $C=I$, and $V=X$. 
+$$ =  \frac{\tau^2}{\sigma^2} - \frac{\tau^2}{\sigma^2} X^T( I + X \frac{\tau^2}{\sigma^2} X^T )^{-1} X \frac{\tau^2}{\sigma^2}   $$
+$$ =  \frac{\tau^2}{\sigma^2} - \frac{\tau^2}{\sigma^2} X^T( \frac{\sigma^2}{\tau^2} I + X X^T )^{-1} X    $$
+
+Now lets plug this in for the variance term:
+$$\Sigma_z = \sigma^2 z^T [ \frac{\tau^2}{\sigma^2} - \frac{\tau^2}{\sigma^2} X^T( \frac{\sigma^2}{\tau^2} I + X X^T )^{-1} X  ] z$$
+$$\Sigma_z =  z^T  \tau^2  z    -           \tau^2 z^T X^T( \frac{\sigma^2}{\tau^2} I + X X^T )^{-1} X  z$$
+$$\Sigma_z =   \tau^2 k_zz   -           \tau^2 k_z^T ( \frac{\sigma^2}{\tau^2} I + K )^{-1} k_z  $$
+
+Thus we have shown the transformation of the variance. \\
+
+Now for the mean: 
+$$\mu_z = z^T [ \frac{\tau^2}{\sigma^2} - \frac{\tau^2}{\sigma^2} X^T( \frac{\sigma^2}{\tau^2} I + X X^T )^{-1} X  ]  X^T y $$
+$$  = \frac{\tau^2}{\sigma^2} z^T X^T y    - \frac{\tau^2}{\sigma^2} z^T X^T( \frac{\sigma^2}{\tau^2} I + X X^T )^{-1} X X^T y $$
+$$  = \frac{\tau^2}{\sigma^2} k_z^T y    - \frac{\tau^2}{\sigma^2} k_z^T ( \frac{\sigma^2}{\tau^2} I + K )^{-1} K y $$
+$$  = \frac{\tau^2}{\sigma^2} k_z^T [ I -  ( \frac{\sigma^2}{\tau^2} I + K )^{-1} K ]  y $$
+
+
+\newpage 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 2. \grade{1} Let $\{(x_i,y_i)\}_{i=1}^n$ be sampled iid from a joint distribution $P_{XY}$ over $\R^d \times \R$ such that for some $w \in \R^d$ we have $y_i \sim \mathcal{N}(x_i^T w,\sigma^2)$. That is, $p(Y =y | x, w) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp(-\frac{(y-x^T w)^2}{2\sigma^2})$. Express your answers in terms of $\mb{X} = [x_1,\dots,x_n]^T$ and $\mb{y} = [y_1,\dots,y_n]^T$.
 \begin{enumerate}
   \item Assume that the true $w$ is drawn from a Laplace prior distribution $p(w) = \frac{1}{(2a)^d} \exp(-\frac{\|w\|_1}{a})$. What the MAP estimate of $w$?
   \item The Laplace prior is not conjugate to the the normal likelihood. Is $\E[w | \mb{X}, \mb{y} ]$ necessarily the same as the MAP estimate? If not, provide an example.  
 \end{enumerate}
+
+
+
+\section*{Problem 2 a Answer}
+
+\begin{align}
+    MAP & = argmax_w \  P(w | data ) \\
+    & = argmax_w \   p(w)  \prod_{i=1}^{n} P(Y=y | x, w)  \\ 
+    & = argmax_w \  log( p(w) ) + log(   \prod_{i=1}^{n} P(Y=y | x, w)  )  \\
+    & = argmax_w \  log( p(w) ) +   \sum_{i=1}^{n} log( P(Y=y | x, w)  )  \\ 
+    & = argmax_w \  - \frac{||w||_1}{ a } + C_1 - \frac{1}{2} \frac{|| y - Xw ||^2_2}{\sigma^2} + C_2    \\ 
+    & = argmin_w \    \frac{1}{a} ||w||_1  +  \frac{1}{2\sigma^2} || y - Xw ||^2_2    \\ 
+    & = argmin_w \    || y - Xw ||^2_2 + \frac{2\sigma^2}{a} ||w||_1   \\ 
+\end{align}
+Like we found with LASSO there is no closed form solution to this equation, because the derivative of $|w|_1$ is not defined for $w_i=0$, so this is where I will leave it. 
+
+
+\section*{Problem 2 b Answer}
+
+The MAP estimator finds the peak of the posterior distribution so any case where the peak is not equal to the mean the MAP will not be equal to the mean/expectation.
+
+For example in two dimensions, the MAP is not equal for any asymmetric distribution with a long tail on only one side. In this case the map will be the mode but not the mean of the distribution. 
+
+
+
+\newpage 
+
+
+
+
+
+
+
+
+
 
 
 
@@ -117,6 +318,74 @@ Report the values of $d$, $\gamma$, and the $\lambda$ values for both kernels.
   \item Suppose $m$ additional samples are drawn i.i.d. the same way the first $n$ samples were drawn. Propose a statistical significance test to decide which learned function (which kernel) is the better fit (hint: if $\epsilon_i \sim \mathcal{N}(0,1)$, how is $\sum_i \epsilon_i^2$ distributed?).
 \end{enumerate}
 
+\newpage
+
+\section*{Problem 3 a Answer}
+
+
+For rbf and $n=30$ I used $\gamma=177.8$ and $\lambda=0.1$ \\
+For poly and $n=30$ I used $d=47$ and $\lambda=0.316277$ \\
+For rbf and $n=300$ I used $\gamma=5.6234$ and $\lambda=1.778 * 10^{-12}$ \\
+For poly and $n=300$ I used $d=41$ and $\lambda=0.017782$ \\
+See final section for the code. 
+
+
+\section*{Problem 3 b/c Answer}
+
+I have made just one plot per kernel and $n$ for b and c, adding on the confidence intervals in each case.  
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/30_rbf}.pdf}
+\end{center}
+
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/30_poly}.pdf}
+\end{center}
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/300_rbf}.pdf}
+\end{center}
+
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/300_poly}.pdf}
+\end{center}
+
+
+\section*{Problem 3 d}
+
+See sections a, b, and c. I have included the results there. 
+
+\section*{Problem 3 e}
+
+\section*{Problem 3 code}
+
+\lstinputlisting[language=python]{hw3/kernel.py}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\newpage
+
+
+
+
+
+
 
 \section{$k$-means clustering}
 
@@ -135,6 +404,93 @@ Do not use any off the shelf implementations, such as those found in \texttt{sci
     \item Implement the \texttt{kmeans++} initialization scheme\footnote{See \url{http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf}.} for your
         $k$-means implementation and repeat part a.  Note that this initialization scheme is widely used in practice, and as a rule should be used. Plot the objective function as a function of iteration. Are the identified centers visually better than part a? 
 \end{enumerate}
+
+
+
+
+
+\newpage
+
+\section*{Problem 4 a Answer}
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/random.obj.5}.pdf}
+\end{center}
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/random.obj.10}.pdf}
+\end{center} 
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/random.obj.20}.pdf}
+\end{center}
+
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/random.heat.5}.pdf}
+\end{center}
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/random.heat.10}.pdf}
+\end{center} 
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/random.heat.20}.pdf}
+\end{center}
+
+
+\section*{Problem 4 b Answer}
+
+I would not say the cluisters look vizually much better with the kmeans ++ scheme. However, they look at least as good, and on average converge in significantly fewer iterations than the random initialization.
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/kpp.obj.5}.pdf}
+\end{center}
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/kpp.obj.10}.pdf}
+\end{center} 
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/kpp.obj.20}.pdf}
+\end{center}
+
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/kpp.heat.5}.pdf}
+\end{center}
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/kpp.heat.10}.pdf}
+\end{center} 
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{{hw3/kpp.heat.20}.pdf}
+\end{center}
+
+
+\section*{Problem 4 code}
+
+\lstinputlisting[language=python]{hw3/kmeans.py}
+
+\newpage
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -178,6 +534,58 @@ Note that you may need to tune the hyper-parameter $\lambda$ to optimize the per
 
 \end{enumerate}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section*{Problem 5 a Answer}
+
+Part A train:   MSE:24.870751120670207	MAE:4.114762091223429 \\
+Part A test:	MSE:24.867391804873332	MAE:4.114205038713316 \\
+
+\section*{Problem 5 b Answer}
+\begin{center}
+    \includegraphics[width=.9\textwidth]{hw3/5b.pdf}
+\end{center}
+
+\section*{Problem 5 c Answer}
+
+\begin{center}
+    \includegraphics[width=.9\textwidth]{hw3/5c.pdf}
+\end{center}
+
+I choose to optimize $U$ and $V^T$ iteritavly as suggested in the hint. $U$ and $V^T$ were initialized randomly using a normal distribution. Additionally I made a validation set to choose all the $\lambda$s reported below. Plotted above is the MSE and MAE. 
+
+
+The MSE, MAE from the test set followed by d, and the validation set determined lambda $\lambda$ \\
+23.133794962901547 3.907912362195389 1 0.01 \\
+23.471354590976414 3.928374180881678 2 1.0 \\
+23.72090424658509 3.955840161002923 5 10.0 \\
+23.89584521011899 4.092839006672779 10 100.0 \\
+22.294961993106273 3.905808727356969 20 100.0 \\
+20.086316023858192 3.6368761845264865 50 100.0 \\
+
+
+
+\section*{Problem 5 code}
+
+\lstinputlisting[language=python]{hw3/jokes.py}
 
 
 \end{document}
