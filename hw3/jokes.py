@@ -173,14 +173,14 @@ def myprint(d, L, mse, mae):
 	print("{}\t{}:\tMSE:{}\tMAE:{}".format(d, L, mse, mae))
 
 def run_d_l(params):
-	Rrow, Rcol, val, train, d, L = params
-	U = np.random.rand(n, d)	
-	#U = np.random.uniform(n, d)	
-	VT = np.random.rand(d, m)	
-	#VT = np.random.uniform(d, m)	
+	Rrow, Rcol, val, train, d, L, U, VT = params
 	predict = U.dot(VT)
 	mse, mae = error(predict, val)	
 	myprint(d, L, mse, mae)
+	
+	bestMse = np.inf	
+	bestU = U
+	bestVT = VT
 
 	i = 0
 	thresh = 0.01
@@ -190,11 +190,16 @@ def run_d_l(params):
 		predict = U.dot(VT)
 		newmse, newmae = error(predict, train)	
 		myprint(d, L, newmse, newmae)
-	
+		
+		if(newmse < bestMse):
+			bestMse = newmse
+			bestU = U.copy()
+			bestVT = VT.copy()
+
 		# check if I should terminate 
-		if( ((i > 2) and (newmse > mse)) or 
-			((np.abs(newmae - mae) < thresh) and (np.abs(newmse - mse) < thresh)) or 
-			(i > 20) ):
+		#if( ((i > 2) and (newmse > mse)) or 
+		if(	((np.abs(newmae - mae) < thresh) and (np.abs(newmse - mse) < thresh)) or 
+			(i > 30) ):
 			break
 		else:
 			mse = newmse
@@ -203,8 +208,7 @@ def run_d_l(params):
 	
 
 	mse, mae = error(predict, val)	
-	print("done with one!")
-	return(U, VT, mse, mae, d, L)
+	return(bestU, bestVT, mse, mae, d, L)
 
 def makeValidation(train):
 	if(True):
@@ -244,12 +248,21 @@ def partC(train, val, test):
 	# make spare matrixs
 	Rrow, Rcol = makeTrainSmaller(train)
 	params = []
-	for L in Ls:
-		for d in ds:
-			param = (Rrow, Rcol, val, train, d, L)
-			params.append(param)
-	
-	results = pool.map(run_d_l, params)
+	results = []
+	for d in ds:
+		U = np.random.rand(n, d)	
+		VT = np.random.rand(d, m)	
+		for L in Ls:
+			param = (Rrow, Rcol, val, train, d, L, U, VT)
+			#params.append(param)
+			rtn = run_d_l(param) 
+			#U = rtn[0]
+			#VT = rtn[1]
+			results.append(rtn)
+			#print("Done with one", error(U.dot(VT), train)  )
+
+
+	#results = pool.map(run_d_l, params)
 	results = pd.DataFrame(results, columns = ["U", "VT", "MSE", "MSA", "d", "L"] )
 	results.to_pickle("partC.pkl")
 	print(results)
@@ -292,7 +305,7 @@ newtrain, val = makeValidation(train)
 
 partA(train, test)
 #partB(train, test)
-#partC(newtrain, val, test)
+partC(newtrain, val, test)
 partC2(newtrain, test)
 
 
