@@ -31,6 +31,9 @@ num_workers = 2
 in_channels = 3
 out_channels = 6
 kernal_d = 5
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
+
 
 def load_data():
 	transform = transforms.Compose( [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)) ] )
@@ -101,6 +104,8 @@ transform, trainset, trainloader, testset, testloader, classes = load_data()
 # get some random training images
 dataiter = iter(trainloader)
 images, labels = dataiter.next()
+images = images.to(device)
+labels = labels.to(device)
 print("iter")
 
 # show images
@@ -110,7 +115,5 @@ print("plot made")
 # print labels
 print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
-
-
-criterion = nn.CrossEntropyLoss()
+#net = Net()
 
