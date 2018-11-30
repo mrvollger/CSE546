@@ -21,7 +21,7 @@ import torch.optim as optim
 
 sns.set()
 sns.set_style("ticks")
-np.random.seed(1)
+np.random.seed(2)
 print("modules loaded")
 
 
@@ -59,13 +59,20 @@ def imshow(img, name = "tmp.pdf"):
 	print("post figure")
 
 class Net(nn.Module):
-	def __init__(self, part, out_channels, kernal_d):
+	def __init__(self, part, out_channels, kernal_d, N):
 		super(Net, self).__init__()
 		self.part=part
 		# 3 input image channel, 6 output channels, 5x5 square convolution
 		# kernel
 		if(self.part == "a"):
-			self.log_fc = nn.Linear(32*32*in_channels, 10)
+			self.a_fc = nn.Linear(32*32*in_channels, 10)
+		elif(self.part == "b"):
+			self.a_fc = nn.Linear(32*32*in_channels, out_channels)
+			self.h1_fc = nn.Linear(out_channels, 10)
+		elif(self.part == "c"):
+			self.convC = nn.Conv2d(in_channels, out_channels, kernal_d)
+			self.poolC = nn.MaxPool2d(N,N)
+
 		else:
 			self.conv1 = nn.Conv2d(in_channels, out_channels, kernal_d)
 			self.pool = nn.MaxPool2d(2,2)
@@ -78,7 +85,7 @@ class Net(nn.Module):
 
 	def forward(self, x):
 		# set up the input vecotr depending on part
-		if(self.part == "a"):
+		if(self.part in ["a", "b"]):
 			x = x # no manipulation
 		else:
 			x = self.pool( F.relu(self.conv1(x)) )
@@ -90,7 +97,10 @@ class Net(nn.Module):
 		x = x.view(-1, flat_feats)
 
 		if(self.part == "a"):
-			x = self.log_fc(x)
+			x = self.a_fc(x)
+		elif(self.part == "b"):
+			x = F.relu( self.a_fc(x))
+			x = self.h1_fc(x)
 		else:
 			x = F.relu(self.fc1(x))
 			x = F.relu(self.fc2(x))
@@ -123,15 +133,21 @@ def testNet(net, testloader):
 
 def generateRandomHypers(n=1):
 	# set ranges
-	lr_range = [0.0005, .01]
+	lr_range = [-4, -2] # log
 	momentum_range = [.1, .95]
-	out_channels_range = [5, 1000]
+	out_channels_range = [1, 3] # log
 	kernal_d_range = [2, 100]
 
 	# generate randoms 
-	lr = np.random.uniform(low=lr_range[0], high=lr_range[1], size = n)	
+	lrtmp = np.logspace(lr_range[0], lr_range[1], num = 100 )
+	lr = np.random.choice(lrtmp, size = n)
+
 	momentum = np.random.uniform(low=momentum_range[0], high=momentum_range[1], size = n)	
-	out_channels = np.random.randint(low=out_channels_range[0], high=out_channels_range[1], size = n)	
+	
+	outtmp = np.logspace(out_channels_range[0], out_channels_range[1], num = 10 )
+	out_channels = np.random.choice(outtmp, size = n).astype(int)
+
+
 	kernal_d = np.random.randint(low=kernal_d_range[0], high=kernal_d_range[1], size = n)	
 
 	return(lr, momentum, out_channels, kernal_d)
@@ -140,9 +156,8 @@ def generateRandomHypers(n=1):
 transform, trainset, trainloader, testset, testloader, classes = load_data()
 
 
-def train(net, optimizer, criterion):
-	epochs = 2
-	loss_l = []
+def train(net, optimizer, criterion, acc = False, epochs=2):
+	loss_l = []; testAcc = []; trainAcc=[]
 	for epoch in range(epochs):  # loop over the dataset multiple times
 		running_loss = 0.0
 		for i, data in enumerate(trainloader, 0):
@@ -159,8 +174,11 @@ def train(net, optimizer, criterion):
 			loss.backward()
 			optimizer.step()
 
-			# add to loss list 
+			# add to loss list, calcualte accuracy if nessisary. 
 			loss_l.append(loss.item())
+			if(acc and ( i%1000 == 0 ) ):
+				testAcc.append(testNet(net, testloader))
+				trainAcc.append(testNet(net, trainloader))
 
 			# print statistics
 			running_loss += loss.item()
@@ -170,32 +188,34 @@ def train(net, optimizer, criterion):
 				print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, ploss) )
 				running_loss = 0.0
 				if(ploss > 2.5): # stop training if this is a bad initalization
-					return
-	return(loss_l)
+					return(loss_l)
+	if(acc):
+		return(loss_l, trainAcc, testAcc)
+	else:
+		return(loss_l)
 
-def loadNet(PATH):
-	model = net(*args, **kwargs)
-	optimizer = optim.SGD(*args, **kwargs)
+def loadNet(PATH, part): 
+	#model = Net(part, 100, 100)
+	#optimizer = optim.SGD(model.parameters(), lr=.01, momentum=.5)
 	checkpoint = torch.load(PATH)
-	model.load_state_dict(checkpoint['model_state_dict'])
-	optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-	acc = checkpoint['acc']
-	loss_l = checkpoint['loss_l']
-	return(checkpoint, model, optimizer)
+	#model.load_state_dict(checkpoint['model_state_dict'])
+	#optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+	#acc = checkpoint['acc']
+	#loss_l = checkpoint['loss_l']
+	return(checkpoint)
 
-def makeNets(part="a"):
+def makeNets(part="a", epochs=2):
 	global device
 	if(part in ["a"]):
 		device="cpu"
 
-	n = 100
-	params = generateRandomHypers(n)
-	lr_l, momentum_l, out_channels_l, kernal_d_l = params
+	n = 20
+	lr_l, momentum_l, out_channels_l, kernal_d_l = generateRandomHypers(n)
 	
 	# check to see if we have already run this part, and make sure nto to overwrite a better result
 	bestNetPath = part + ".best.net"
 	if os.path.exists(bestNetPath):
-		checkpoint, bmodel, boptimizer = loadNet(bestNetPath)
+		checkpoint = loadNet(bestNetPath, part)
 		bestAcc=checkpoint['acc']
 	else:
 		bestAcc = 0
@@ -208,13 +228,13 @@ def makeNets(part="a"):
 		net = Net(part, out_channels, kernal_d).to(device)
 		criterion = nn.CrossEntropyLoss()
 		optimizer = optim.SGD(net.parameters(), lr=lr, momentum=momentum)
-		loss_l = train(net, optimizer, criterion)
+		loss_l = train(net, optimizer, criterion, epochs=epochs)
 		acc = testNet(net, testloader)
 
 		if(acc >= bestAcc):
 			bestAcc = acc
 			torch.save({
-				'params': params,
+				'params': (lr, momentum, out_channels, kernal_d),
 				'model_state_dict': net.state_dict(),
 				'optimizer_state_dict': optimizer.state_dict(),
 				'loss_l': loss_l, 
@@ -223,27 +243,41 @@ def makeNets(part="a"):
 			print("Best model updated for part " + part)
 
 
+def plotNet(part = "a", epochs = 2):
+	global device
+	if(part in ["a"]):
+		device="cpu"
+
+	out = part + ".pdf"
+	bestNetPath = part + ".best.net"
+	checkpoint = loadNet(bestNetPath, part)
+	#lr, momentum, out_channels, kernal_d = checkpoint["params"]
+	params = checkpoint["params"]
+	print(params)
+	print(checkpoint["acc"])
+
+	net = Net(part, *params[2:] ).to(device)
+	criterion = nn.CrossEntropyLoss()
+	optimizer = optim.SGD(net.parameters(), lr=params[0], momentum=params[1] )
+	loss_l, trainAcc, testAcc = train(net, optimizer, criterion, acc = True, epochs = epochs)
+	iters = np.arange(len(trainAcc))*1000
+	print(len(iters), len(trainAcc), len(testAcc))
+
+	plt.figure()
+	sns.lineplot(iters, testAcc, label="test")
+	sns.lineplot(iters, trainAcc, label="train")
+	plt.title(str(params))
+	plt.ylabel("Accuracy")
+	plt.xlabel("Iteration")
+	plt.savefig(out)
 
 
-makeNets(part = "a")
+#makeNets(part="a")
+#plotNet(part="a")
 
+#makeNets(part="b", epochs=16)
+#plotNet(part="b", epochs=16)
 
-
-
-# 
-# test data loading
-#
-# get some random training images
-dataiter = iter(trainloader)
-images, labels = dataiter.next()
-images = images.to(device)
-labels = labels.to(device)
-print("iter")
-
-# show images
-imshow(torchvision.utils.make_grid(images))
-print("plot made")
-
-# print labels
-print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
+makeNets(part="", epochs=16)
+plotNet(part="c", epochs=16)
 
