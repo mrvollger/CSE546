@@ -71,7 +71,9 @@ class Net(nn.Module):
 			self.h1_fc = nn.Linear(out_channels, 10)
 		elif(self.part == "c"):
 			self.convC = nn.Conv2d(in_channels, out_channels, kernal_d)
-			self.poolC = nn.MaxPool2d(N,N)
+			self.poolC = nn.MaxPool2d((N,N))
+			self.dim = int( (32 - kernal_d + 1)/N )
+			self.flat_fc = nn.Linear(out_channels*self.dim*self.dim, 10)
 
 		else:
 			self.conv1 = nn.Conv2d(in_channels, out_channels, kernal_d)
@@ -87,6 +89,8 @@ class Net(nn.Module):
 		# set up the input vecotr depending on part
 		if(self.part in ["a", "b"]):
 			x = x # no manipulation
+		elif(self.part in ["c"]):
+			x = self.poolC( F.relu(self.convC(x)) )
 		else:
 			x = self.pool( F.relu(self.conv1(x)) )
 			x = self.pool( F.relu(self.conv2(x)) )
@@ -94,13 +98,17 @@ class Net(nn.Module):
 		# should be 16 * 5 * 5 in the tutorial, and that is ture/works
 		flat_feats = self.num_flat_features(x)
 		#print(flat_feats)
+		#print(x.size())
 		x = x.view(-1, flat_feats)
+		#print(x.size())
 
 		if(self.part == "a"):
 			x = self.a_fc(x)
 		elif(self.part == "b"):
 			x = F.relu( self.a_fc(x))
 			x = self.h1_fc(x)
+		elif(self.part == "c"):
+			x = self.flat_fc(x)
 		else:
 			x = F.relu(self.fc1(x))
 			x = F.relu(self.fc2(x))
@@ -136,7 +144,8 @@ def generateRandomHypers(n=1):
 	lr_range = [-4, -2] # log
 	momentum_range = [.1, .95]
 	out_channels_range = [1, 3] # log
-	kernal_d_range = [2, 100]
+	kernal_d_range = [2, 30]
+	pool_range = [2, 6]
 
 	# generate randoms 
 	lrtmp = np.logspace(lr_range[0], lr_range[1], num = 100 )
@@ -150,10 +159,11 @@ def generateRandomHypers(n=1):
 
 	kernal_d = np.random.randint(low=kernal_d_range[0], high=kernal_d_range[1], size = n)	
 
-	return(lr, momentum, out_channels, kernal_d)
+	N = np.random.randint(low=pool_range[0], high=pool_range[1], size = n)
+
+	return(lr, momentum, out_channels, kernal_d, N)
 
 
-transform, trainset, trainloader, testset, testloader, classes = load_data()
 
 
 def train(net, optimizer, criterion, acc = False, epochs=2):
@@ -175,17 +185,20 @@ def train(net, optimizer, criterion, acc = False, epochs=2):
 			optimizer.step()
 
 			# add to loss list, calcualte accuracy if nessisary. 
+			psize = 50000 / 5 
+			batchi = i * batch_size 
 			loss_l.append(loss.item())
-			if(acc and ( i%1000 == 0 ) ):
+			if(acc and ( (batchi)%psize == 0 ) ):
 				testAcc.append(testNet(net, testloader))
 				trainAcc.append(testNet(net, trainloader))
 
 			# print statistics
 			running_loss += loss.item()
-			psize = 4000
-			if i % psize == (psize - 1):    # print every psize mini-batches
+
+			#print(i, batchi, batchi%psize)
+			if( (batchi % psize == 0) and (i != 0) ):    # print every psize mini-batches
 				ploss = running_loss/psize 
-				print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, ploss) )
+				print('[%d, %5d] loss: %.3f' % (epoch + 1, (batchi), ploss) )
 				running_loss = 0.0
 				if(ploss > 2.5): # stop training if this is a bad initalization
 					return(loss_l)
@@ -208,9 +221,8 @@ def makeNets(part="a", epochs=2):
 	global device
 	if(part in ["a"]):
 		device="cpu"
-
 	n = 20
-	lr_l, momentum_l, out_channels_l, kernal_d_l = generateRandomHypers(n)
+	lr_l, momentum_l, out_channels_l, kernal_d_l, N_l = generateRandomHypers(n)
 	
 	# check to see if we have already run this part, and make sure nto to overwrite a better result
 	bestNetPath = part + ".best.net"
@@ -222,10 +234,10 @@ def makeNets(part="a", epochs=2):
 	print("Best accuracy so far:", bestAcc)
 
 	for i in range(n):
-		lr, momentum, out_channels, kernal_d = lr_l[i], momentum_l[i], out_channels_l[i], kernal_d_l[i]
-		print(lr, momentum, out_channels, kernal_d)
+		lr, momentum, out_channels, kernal_d, N = lr_l[i], momentum_l[i], out_channels_l[i], kernal_d_l[i], N_l[i]
+		print(lr, momentum, out_channels, kernal_d, N)
 
-		net = Net(part, out_channels, kernal_d).to(device)
+		net = Net(part, out_channels, kernal_d, N).to(device)
 		criterion = nn.CrossEntropyLoss()
 		optimizer = optim.SGD(net.parameters(), lr=lr, momentum=momentum)
 		loss_l = train(net, optimizer, criterion, epochs=epochs)
@@ -234,7 +246,7 @@ def makeNets(part="a", epochs=2):
 		if(acc >= bestAcc):
 			bestAcc = acc
 			torch.save({
-				'params': (lr, momentum, out_channels, kernal_d),
+				'params': (lr, momentum, out_channels, kernal_d, N),
 				'model_state_dict': net.state_dict(),
 				'optimizer_state_dict': optimizer.state_dict(),
 				'loss_l': loss_l, 
@@ -256,7 +268,7 @@ def plotNet(part = "a", epochs = 2):
 	print(params)
 	print(checkpoint["acc"])
 
-	net = Net(part, *params[2:] ).to(device)
+	net = Net(part, *params[2:]).to(device)
 	criterion = nn.CrossEntropyLoss()
 	optimizer = optim.SGD(net.parameters(), lr=params[0], momentum=params[1] )
 	loss_l, trainAcc, testAcc = train(net, optimizer, criterion, acc = True, epochs = epochs)
@@ -271,13 +283,14 @@ def plotNet(part = "a", epochs = 2):
 	plt.xlabel("Iteration")
 	plt.savefig(out)
 
+transform, trainset, trainloader, testset, testloader, classes = load_data()
 
-#makeNets(part="a")
-#plotNet(part="a")
+#makeNets(part="a", epochs=10)
+#plotNet(part="a", epochs=10)
 
 #makeNets(part="b", epochs=16)
 #plotNet(part="b", epochs=16)
 
-makeNets(part="", epochs=16)
+makeNets(part="c", epochs=16)
 plotNet(part="c", epochs=16)
 
