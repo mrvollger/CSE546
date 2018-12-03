@@ -5,6 +5,7 @@ import sys
 parser = argparse.ArgumentParser(description="")
 parser.add_argument("infile", nargs="?", help="input data file",  type=argparse.FileType('r'), default="/net/eichler/vol21/projects/bac_assembly/nobackups/genomeWide/CHM13_V2/LocalAssemblies/PlaceOnt/LHR.tsv")
 parser.add_argument("truth", nargs="?", help="input data file",  type=argparse.FileType('r'), default="/net/eichler/vol21/projects/bac_assembly/nobackups/genomeWide/CHM13_V2/LocalAssemblies/PlaceOnt/intersect.bed")
+parser.add_argument("--kmer", help="input kmer matrix",  default=None)
 parser.add_argument("-X", help="output data",  default="data/data.npy")
 parser.add_argument("-Y", help="output labels", default="data/labels.npy")
 parser.add_argument("--dlabels",  help="output labels", type=argparse.FileType('w'), default="data/dlabels.txt")
@@ -48,7 +49,17 @@ def GetLabels(X):
 	return(Y)
 
 def mywrite(X, Y):
+	# numpy array of values
 	mat = X.values
+	# if we have cigar kmer counts read them in
+
+	if(args.kmer is not None):
+		print("Adding cigar kmers")
+		kmers = np.load(args.kmer)
+		print(mat.shape, kmers.shape)
+		mat = np.concatenate([X, kmers], axis = 1)
+		print(mat.shape)
+
 	labels = np.array(Y)
 	labels = labels.reshape((len(labels), 1))
 	np.save(args.X, mat)
@@ -59,9 +70,14 @@ def mywrite(X, Y):
 	#print(mat)
 	#print(labels)
 
+
+
+
+
 print("Reading Data")
 X = readData()
 Y = GetLabels(X)
+
 print("Writing data")
 mywrite(X,Y)
 

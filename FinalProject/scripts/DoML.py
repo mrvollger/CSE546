@@ -16,6 +16,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from multiprocessing.dummy import Pool as ThreadPool
 import itertools
+# TensorFlow and tf.keras
+import tensorflow as tf
+from tensorflow import keras
 
 
 sns.set()
@@ -32,6 +35,10 @@ def load_data(validation=False):
 	X = X[idx,:]
 	y = y[idx]
 	
+	# remove uninformative
+	haschange = (X.ptp(axis = 0) > 0.0)
+	X = X[:, haschange]
+
 	# normalize the data, important? 
 	X = (X - X.min(axis=0)) / X.ptp(axis=0)
 
@@ -158,7 +165,7 @@ X_train, y_train, X_val, y_val, X_test, y_test, features = load_data(validation=
 n, d = X_train.shape
 threads = 16
 pool = ThreadPool(threads)
-ML=["SVM", "GB"]
+ML=[ "GB"]
 
 
 if("SVM" in ML):
@@ -166,8 +173,8 @@ if("SVM" in ML):
 	# SVM
 	#
 	print("Running SVM")
-	Cs = np.float_power( 10, np.arange(-1, 10) )
-	gammas = np.float_power( 10, np.arange(-11, 2) )
+	Cs = np.float_power( 10, np.arange(-1, 7) )
+	gammas = np.float_power( 10, np.arange(-9, 2) )
 	kernals = ["rbf", "sigmoid"]
 	svmParams = []
 	for kernal in kernals:
@@ -180,7 +187,8 @@ if("SVM" in ML):
 	svmrtn = pool.map(SVM, svmParams)
 
 	svm_df = pd.DataFrame(svmrtn, columns=['model', 'gamma', 'C', "kernel", 'Accuracy_False', 'Accuracy_True'])
-	svm_df = pd.melt(svm_df, id_vars=['model', 'gamma', 'C', "kernel"], value_vars=['Accuracy_False', 'Accuracy_True']  )
+	svm_df["Average"] = svm_df[["Accuracy_False", "Accuracy_True"]].mean(axis=1)
+	svm_df = pd.melt(svm_df, id_vars=['model', 'gamma', 'C', "kernel"], value_vars=['Accuracy_False', 'Accuracy_True', "Average"]  )
 
 	fig, ax = plt.subplots(figsize=(20,20))
 	fg = sns.FacetGrid(svm_df, col="kernel", row="variable")
@@ -224,7 +232,7 @@ if("GB" in ML):
 	# Gboost
 	#
 	print("Running Gboost")
-	n_tree_l = np.arange(50,3000,400)
+	n_tree_l = np.arange(50,5000,400)
 	learning_rate_l = np.float_power( 10, np.arange(-4, 1.5, 0.5) )
 	loss_l = ["deviance", "exponential"]
 	big_l = [n_tree_l, learning_rate_l, loss_l]
@@ -237,8 +245,10 @@ if("GB" in ML):
 
 	cols = ['model', 'num_trees', 'learning_rate', "loss_function", 'Accuracy_False', 'Accuracy_True']
 	gb_df = pd.DataFrame(gbrtn, columns=cols)
-	gb_df = pd.melt(gb_df, id_vars=cols[:-2], value_vars=cols[-2:]  )
-
+	gb_df["Average"] = gb_df[["Accuracy_False", "Accuracy_True"]].mean(axis=1)
+	cols.append("Average")
+	gb_df = pd.melt(gb_df, id_vars=cols[:-3], value_vars=cols[-3:]  )
+	print(gb_df)
 	fig, ax = plt.subplots(figsize=(20,20))
 	fg = sns.FacetGrid(gb_df, col=cols[3], row="variable")
 	p = fg.map_dataframe(draw_heatmap, 'num_trees', 'learning_rate', 'value', vmin=0, vmax=1, annot=True)
