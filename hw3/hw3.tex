@@ -134,7 +134,7 @@ We know we can differentiate this and set it equal to zero to get $MAP=\hat{w}$
 
 
 \section*{Problem 1 c Answer}
-Because this is a normal the conjagate prior is usually aslo a normal. So we want something that takes on the following form:
+Because this is a normal the conjugate prior is usually aslo a normal. So we want something that takes on the following form:
 
 \begin{align}
     p_{guess}(w) & = C_1 exp(-1/2 (w-\mu)^T \Sigma^{-1} (w - \mu )) \\
@@ -142,7 +142,7 @@ Because this is a normal the conjagate prior is usually aslo a normal. So we wan
     & = C_2 exp( -1/2 [ w^T \Sigma^{-1} w - 2 u^T\Sigma^{-1} w ]) \\
 \end{align}
 
-Now let us see if we can get our distribution inot that form
+Now let us see if we can get our distribution in to that form:
 
 
 \begin{align}
@@ -157,7 +157,7 @@ Thus
 $$\Sigma = ( \frac{1}{\tau^2} I + \frac{X^TX}{\sigma^2} )^{-1} $$
 $$\Sigma = \sigma^2 ( \frac{\sigma^2}{\tau^2} I +X^T X )^{-1} $$
 
-We know the the mean is can be found from the following equation. 
+The mean can be found from the following equation. 
 $$ \mu^T \Sigma^{-1} = y^TX/\sigma^2 $$
 $$ \mu^T = y^TX/\sigma^2 \Sigma  $$
 $$ \mu  =  \Sigma  X^T y /\sigma^2 $$
@@ -169,7 +169,7 @@ $$ \mu = E[w|X,y] $$
 \section*{Problem 1 d Answer}
 Note that without the linear transformation the mean is: 
 $$\mu = E[w]$$
-and the variance is: 
+and the co-variance is: 
 $$ \Sigma =  Var(w) = E(ww^T) - E(w)^2$$
 
 Now lets try to find $\mu_z$ and $\Sigma_z$.
@@ -197,7 +197,7 @@ Thus we have shown the transformation of the variance. \\
 
 \section*{Problem 1 e Answer}
 
-First I am just going to expand the following term with the provided equation:
+First I am just going to expand the following term with the provided identity:
 $$ [ \frac{\sigma^2}{\tau^2} I +X^T X ]^{-1}  $$
 With $A=\frac{\sigma^2}{\tau^2} I $, $U=X^T$, $C=I$, and $V=X$. 
 $$ =  \frac{\tau^2}{\sigma^2} - \frac{\tau^2}{\sigma^2} X^T( I + X \frac{\tau^2}{\sigma^2} X^T )^{-1} X \frac{\tau^2}{\sigma^2}   $$
@@ -210,11 +210,19 @@ $$\Sigma_z =   \tau^2 k_zz   -           \tau^2 k_z^T ( \frac{\sigma^2}{\tau^2} 
 
 Thus we have shown the transformation of the variance. \\
 
-Now for the mean: 
-$$\mu_z = z^T [ \frac{\tau^2}{\sigma^2} - \frac{\tau^2}{\sigma^2} X^T( \frac{\sigma^2}{\tau^2} I + X X^T )^{-1} X  ]  X^T y $$
-$$  = \frac{\tau^2}{\sigma^2} z^T X^T y    - \frac{\tau^2}{\sigma^2} z^T X^T( \frac{\sigma^2}{\tau^2} I + X X^T )^{-1} X X^T y $$
-$$  = \frac{\tau^2}{\sigma^2} k_z^T y    - \frac{\tau^2}{\sigma^2} k_z^T ( \frac{\sigma^2}{\tau^2} I + K )^{-1} K y $$
-$$  = \frac{\tau^2}{\sigma^2} k_z^T [ I -  ( \frac{\sigma^2}{\tau^2} I + K )^{-1} K ]  y $$
+Now for the mean:
+\begin{align}
+    \mu_z & = z^T [ \frac{\tau^2}{\sigma^2} - \frac{\tau^2}{\sigma^2} X^T( \frac{\sigma^2}{\tau^2} I + X X^T )^{-1} X  ]  X^T y \\
+    &  = \frac{\tau^2}{\sigma^2} z^T X^T y    - \frac{\tau^2}{\sigma^2} z^T X^T( \frac{\sigma^2}{\tau^2} I + X X^T )^{-1} X X^T y \\
+    &  = \frac{\tau^2}{\sigma^2} k_z^T y    - \frac{\tau^2}{\sigma^2} k_z^T ( \frac{\sigma^2}{\tau^2} I + K )^{-1} K y \\
+    &  = \frac{\tau^2}{\sigma^2} k_z^T [ I -  ( \frac{\sigma^2}{\tau^2} I + K )^{-1} K ]  y \\
+    &  = \frac{\tau^2}{\sigma^2} k_z^T [ I -  K ( \frac{\sigma^2}{\tau^2} I + K )^{-1} ]  y \\
+    &  =  k_z^T [ \frac{\tau^2}{\sigma^2} ( I -  K ( \frac{\sigma^2}{\tau^2} I + K )^{-1} ) ]  y \\
+    &  =  k_z^T [ \frac{\tau^2}{\sigma^2} ( (\frac{\sigma^2}{\tau^2}I + K) - K ) (( \frac{\sigma^2}{\tau^2} I + K )^{-1} ]  y \\
+    &  =  k_z^T [ \frac{\tau^2}{\sigma^2} ( \frac{\sigma^2}{\tau^2}I ) (( \frac{\sigma^2}{\tau^2} I + K )^{-1} ]  y \\
+    &  =  k_z^T ( \frac{\sigma^2}{\tau^2} I + K )^{-1}   y \\
+\end{align}
+Thus we have shown the transformation of the mean. \\
 
 
 \newpage 
@@ -441,7 +449,7 @@ Do not use any off the shelf implementations, such as those found in \texttt{sci
 
 \section*{Problem 4 b Answer}
 
-I would not say the cluisters look vizually much better with the kmeans ++ scheme. However, they look at least as good, and on average converge in significantly fewer iterations than the random initialization.
+I would not say the clusters look visually much better with the kmeans ++ scheme. However, they look at least as good, and on average converge in significantly fewer iterations than the random initialization.
 
 \begin{center}
     \includegraphics[width=.9\textwidth]{{hw3/kpp.obj.5}.pdf}
@@ -570,8 +578,17 @@ Part A test:	MSE:24.867391804873332	MAE:4.114205038713316 \\
     \includegraphics[width=.9\textwidth]{hw3/5c.pdf}
 \end{center}
 
-I choose to optimize $U$ and $V^T$ iteritavly as suggested in the hint. $U$ and $V^T$ were initialized randomly using a normal distribution. Additionally I made a validation set to choose all the $\lambda$s reported below. Plotted above is the MSE and MAE. 
+ Plotted above is the MSE and MAE for my implementation of part c. \\
 
+I choose to optimize $U$ and $V^T$ iteritavly as suggested in the hint by taking derivatives and finding closed form solutions that I could solve with "la.solve". I terminated iterative improvement of U and V when the MSE and MAE changed by less than 0.01. \\
+
+$U$ and $V^T$ were initialized randomly using a normal distribution. \\
+
+I made a validation set from the training set to choose all the $\lambda$s reported below. I did this by randomly removing user ratings from the data-set, not by randomly removing users.\\ 
+
+I tried to improve performance by using the previous $U, V^T$ when starting a new $\lambda$ but I found this gave worse MSE/MAEs overall. \\
+
+To avoid the n by m problem I implemented $R$ as two scipy sparse matrices, $Rrow$ for fast row slicing and $Rcol$ for fast column slicing. \\
 
 The MSE, MAE from the test set followed by d, and the validation set determined lambda $\lambda$ \\
 23.133794962901547 3.907912362195389 1 0.01 \\
