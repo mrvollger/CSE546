@@ -8,6 +8,8 @@
 \usepackage[final, nonatbib]{nips_2018}
 \usepackage{graphicx}
 \usepackage[font=small,labelfont=bf]{caption}
+\usepackage{subcaption}
+
 
 % to compile a preprint version, e.g., for submission to arXiv, add
 % add the [preprint] option:
@@ -156,6 +158,45 @@ If I fail to improve the classification accuracy of true alignments using the st
     \captionof{figure}{Exploration of Random Forest accuracy with different hyper-parameters.}
     \label{fig:RF}
 \end{center}
+
+
+
+
+
+
+
+
+
+
+
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{FinalProject/conf_SVM.pdf}
+  \caption{Support Vector Machine}
+  \label{fig:sub1}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{FinalProject/conf_Random_Forest.pdf}
+  \caption{Random Forest}
+  \label{fig:sub2}
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{FinalProject/conf_Gradient_Boosting_Trees.pdf}
+\caption{Gradient Boosting Trees}
+  \label{fig:sub2}
+\end{subfigure}
+\caption{A figure with two subfigures}
+\label{fig:conf}
+\end{figure}
+
+
+
+
+
 
 
 \end{document}
