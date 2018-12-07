@@ -14,6 +14,7 @@ import pandas as pd
 from sklearn import svm 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import confusion_matrix
 from multiprocessing.dummy import Pool as ThreadPool
 import itertools
 # TensorFlow and tf.keras
@@ -176,21 +177,39 @@ def plotPCA(X, y):
 	plt.legend()
 	plt.savefig("dim_red.pdf")	
 
+def confusion(df, algo):
+	sns.set_context("paper", font_scale=1.5)
+	
+	bestM = df.ix[ df["Average"].idxmax() ]["model"]
+	print(bestM)
+	y_true = y_test
+	y_pred = bestM.predict(X_test)
+	class_names = ['False Alignment', 'True Alignment']
+
+	cm = confusion_matrix(y_true, y_pred)
+	cm = cm/cm.sum(axis=1)[:,None]
+	print(cm)
+	df_cm = pd.DataFrame(cm, index=class_names, columns=class_names,)
+	fig = plt.figure()
+	heatmap = sns.heatmap(df_cm, annot=True)
+	heatmap.yaxis.set_ticklabels(heatmap.yaxis.get_ticklabels(), rotation=90, va='center')#, ha='right')
+	heatmap.xaxis.set_ticklabels(heatmap.xaxis.get_ticklabels(), rotation=0) #, ha='right')
+	plt.ylabel('True label')
+	plt.xlabel('Predicted label')
+	#plt.title(algo)
+	plt.savefig("conf_{}.pdf".format(algo))
+	sns.set_context("paper", font_scale=.4)
 
 #
 # set up
 #
 X_train, y_train, X_val, y_val, X_test, y_test, features = load_data(validation=True)
 n, d = X_train.shape
-
-
-plotPCA(X_train, y_train)
-
-exit()
+#plotPCA(X_train, y_train)
 
 threads = 16
 pool = ThreadPool(threads)
-ML=[ "RF"]
+ML=[ "SVM", "RF", "GB"]
 
 
 
@@ -212,10 +231,14 @@ if("SVM" in ML):
 
 	svmrtn = pool.map(SVM, svmParams)
 
+
+
 	svm_df = pd.DataFrame(svmrtn, columns=['model', 'gamma', 'C', "kernel", 'Accuracy_False', 'Accuracy_True'])
 	svm_df["Average"] = svm_df[["Accuracy_False", "Accuracy_True"]].mean(axis=1)
+	confusion(svm_df, "SVM")
+	
+	
 	svm_df = pd.melt(svm_df, id_vars=['model', 'gamma', 'C', "kernel"], value_vars=['Accuracy_False', 'Accuracy_True', "Average"]  )
-
 	fig, ax = plt.subplots(figsize=(20,20))
 	fg = sns.FacetGrid(svm_df, col="kernel", row="variable")
 	p = fg.map_dataframe(draw_heatmap, 'gamma', 'C', 'value', vmin=0, vmax=1, annot=True)
@@ -224,13 +247,14 @@ if("SVM" in ML):
 	plt.savefig("SVM_heat.pdf")
 
 
+
 	
 if("RF" in ML):
 	#
 	# Random Forest
 	#
 	print("Running Random Forest")
-	n_tree_l = np.arange(5,1000,50)
+	n_tree_l = np.arange(5,1000,100)
 	max_features_l = np.append( np.sqrt(np.array([.1,1,10,100]) * int(X_train.shape[1])), [X_train.shape[1]]).astype(int)
 	print(max_features_l)
 	min_samples_leaf_l = np.arange(2,5)
@@ -246,10 +270,9 @@ if("RF" in ML):
 	cols = ['model', 'num_trees', 'max_features', "min_samples_leaf", 'Accuracy_False', 'Accuracy_True']
 	rf_df = pd.DataFrame(rfrtn, columns=cols)
 	rf_df["Average"] = rf_df[["Accuracy_False", "Accuracy_True"]].mean(axis=1)
-	rf_df = pd.melt(rf_df, id_vars=cols[:-2], value_vars=['Accuracy_False', 'Accuracy_True', "Average"]  )
-	
-	print(rf_df)
+	confusion(rf_df, "Random_Forest")
 
+	rf_df = pd.melt(rf_df, id_vars=cols[:-2], value_vars=['Accuracy_False', 'Accuracy_True', "Average"]  )
 	fig, ax = plt.subplots(figsize=(20,20))
 	fg = sns.FacetGrid(rf_df, col=cols[3], row="variable")
 	p = fg.map_dataframe(draw_heatmap, 'num_trees', 'max_features', 'value', vmin=0, vmax=1, annot=True)
@@ -276,6 +299,8 @@ if("GB" in ML):
 	cols = ['model', 'num_trees', 'learning_rate', "loss_function", 'Accuracy_False', 'Accuracy_True']
 	gb_df = pd.DataFrame(gbrtn, columns=cols)
 	gb_df["Average"] = gb_df[["Accuracy_False", "Accuracy_True"]].mean(axis=1)
+	confusion(gb_df, "Gradient_Boosting_Trees")
+
 	cols.append("Average")
 	gb_df = pd.melt(gb_df, id_vars=cols[:-3], value_vars=cols[-3:]  )
 	print(gb_df)
