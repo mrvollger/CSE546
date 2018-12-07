@@ -17,8 +17,8 @@ from sklearn.ensemble import GradientBoostingClassifier
 from multiprocessing.dummy import Pool as ThreadPool
 import itertools
 # TensorFlow and tf.keras
-import tensorflow as tf
-from tensorflow import keras
+#import tensorflow as tf
+#from tensorflow import keras
 
 
 sns.set()
@@ -156,6 +156,25 @@ def Gboost(params):
 	return(model, n_trees, lr, loss,  acc[0], acc[1])
 
 	
+def plotPCA(X, y):
+	#from sklearn.decomposition import PCA as dim_red
+	from sklearn.manifold import TSNE as dim_red
+	matplotlib.rcParams['lines.markeredgewidth'] = 0
+	sklearn_pca = dim_red(n_components=2)
+	pca = sklearn_pca.fit_transform(X)
+	print(pca, pca.shape, y.shape, X.shape)
+
+	plt.figure(figsize=(6, 4))
+	for lab, col, marker in zip(('False Alignment', 'True Alignment'), ('#B22222', 'black'), ('X', "+")):
+		label = 0
+		if(lab == "True Alignment"):
+			label = 1	
+		plt.scatter(pca[y==label, 0], pca[y==label, 1], label=lab, color=col, alpha=0.75, marker=marker )
+	
+	plt.xlabel('Component 1')
+	plt.ylabel('Component 2')
+	plt.legend()
+	plt.savefig("dim_red.pdf")	
 
 
 #
@@ -163,9 +182,16 @@ def Gboost(params):
 #
 X_train, y_train, X_val, y_val, X_test, y_test, features = load_data(validation=True)
 n, d = X_train.shape
+
+
+plotPCA(X_train, y_train)
+
+exit()
+
 threads = 16
 pool = ThreadPool(threads)
-ML=[ "GB"]
+ML=[ "RF"]
+
 
 
 if("SVM" in ML):
@@ -204,8 +230,9 @@ if("RF" in ML):
 	# Random Forest
 	#
 	print("Running Random Forest")
-	n_tree_l = np.arange(5,500,50)
-	max_features_l = np.arange(1, d-1)
+	n_tree_l = np.arange(5,1000,50)
+	max_features_l = np.append( np.sqrt(np.array([.1,1,10,100]) * int(X_train.shape[1])), [X_train.shape[1]]).astype(int)
+	print(max_features_l)
 	min_samples_leaf_l = np.arange(2,5)
 	big_l = [n_tree_l, max_features_l, min_samples_leaf_l]
 	rfParams = []
@@ -218,7 +245,10 @@ if("RF" in ML):
 
 	cols = ['model', 'num_trees', 'max_features', "min_samples_leaf", 'Accuracy_False', 'Accuracy_True']
 	rf_df = pd.DataFrame(rfrtn, columns=cols)
-	rf_df = pd.melt(rf_df, id_vars=cols[:-2], value_vars=cols[-2:]  )
+	rf_df["Average"] = rf_df[["Accuracy_False", "Accuracy_True"]].mean(axis=1)
+	rf_df = pd.melt(rf_df, id_vars=cols[:-2], value_vars=['Accuracy_False', 'Accuracy_True', "Average"]  )
+	
+	print(rf_df)
 
 	fig, ax = plt.subplots(figsize=(20,20))
 	fg = sns.FacetGrid(rf_df, col=cols[3], row="variable")
