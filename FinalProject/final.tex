@@ -100,7 +100,29 @@ Using ultra-long sequencing data \parencite{Jain2018} and an internal ultra-long
 \texttt{https://eichlerlab.gs.washington.edu/help/mvollger/CSE546/OntToSDA.nof.bam.tsv} \\
 To create labels for the data set I have aligned both the local assemblies and ultra-long sequencing data to the human reference (which has these regions correctly assembled) and determined whether the alignments I observed in my data set are reflected in the human reference. Combining these I have available to me 4,801 alignments each with true/false labels. The classes are not equally represented, with only 1/5 of alignments classified as true.   
 
+
+
 \section*{Preliminary Results and Methods}
+
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{FinalProject/conf_SVM.pdf}
+  \caption{Support Vector Machine}
+  \label{fig:sub1}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{FinalProject/}
+  \caption{Random Forest}
+  \label{fig:sub2}
+\end{subfigure}
+\caption{Confusion matrices showing the classification accuracy on the test set using the best hyper-parameters found during cross validation for SVM, random forest, and gradient boosting trees. }
+\label{fig:conf}
+\end{figure}
+
+
 For the milestone I have applied three classification techniques to the data, SVM \parencite{Hastie2008}, Random Forests \parencite{Ho1995, Breiman2001}, and Gradient Boosting \parencite{Friedman1999GreedyMachine}. \parencite{Pedregosa2011Scikit-learnPython} Before applying these methods to my data, I performed several additional cleanup steps on the data. I normalized each feature to fall in between zero and one, randomly shuffled the data, and selected 10 percent of it to leave out as a final test set. 
 
 For each of the mentioned methods I have made an initial effort to explore the hyper-parameters of the models. In \autoref{fig:SVM} I show the classification accuracy on a validation set for both false and true alignments. Immediately it is clear that the class imbalance in the data is a complicating factor in model performance, as many of the models simply classify everything as a false alignment achieving ~80 percent accuracy. Fortunately, by varying the hyper-parameters $C$ and $gamma$ I am able to achieve upwards of 60 percent accuracy on true alignments and 90 percent on false alignments. $C$ is a regularization parameter that controls the complexity of the model. Low values of $C$ encourage a simple model, while high values of C allow the decision surface to become more complex. $\gamma$ controls how much influence each example has on the model. High values of $\gamma$ mean that each training example is not very important and the model will have low bias but high variance, low values of gamma do the opposite, each training example has lots of weight and therefore has high bias and low variance.\autoref{fig:SVM} indicates that I could further explore the hyper-parameter space by further increasing $C$ and $\gamma$. I will test higher values of $\gamma$; however I will avoid testing higher values of $C$ since I would be hesitant to use a model with such high bias. 
@@ -119,11 +141,32 @@ My code for this project can be found at: \\
 \texttt{https://github.com/mvollger/CSE546/tree/master/FinalProject}
 
 
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{FinalProject/GB_heat.pdf}
-    \captionof{figure}{Exploration of Gradient boosting accuracy with different hyper-parameters. Shown are the validation accuracies for classifying false alignments (top row) and true alignments (bottom row) across different choices for the hyper-parameters  learning rate, number of trees, and two loss functions "deviance," and "exponential."}
-    \label{fig:GB}
-\end{center}
+
+
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{FinalProject/conf_SVM.pdf}
+  \caption{Support Vector Machine}
+  \label{fig:sub1}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{FinalProject/conf_Random_Forest.pdf}
+  \caption{Random Forest}
+  \label{fig:sub2}
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{FinalProject/conf_Gradient_Boosting_Trees.pdf}
+\caption{Gradient Boosting Trees}
+  \label{fig:sub2}
+\end{subfigure}
+\caption{Confusion matrices showing the classification accuracy on the test set using the best hyper-parameters found during cross validation for SVM, random forest, and gradient boosting trees. }
+\label{fig:conf}
+\end{figure}
+
 
 
 
@@ -161,6 +204,11 @@ If I fail to improve the classification accuracy of true alignments using the st
 
 
 
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{FinalProject/GB_heat.pdf}
+    \captionof{figure}{Exploration of Gradient boosting accuracy with different hyper-parameters. Shown are the validation accuracies for classifying false alignments (top row) and true alignments (bottom row) across different choices for the hyper-parameters  learning rate, number of trees, and two loss functions "deviance," and "exponential."}
+    \label{fig:GB}
+\end{center}
 
 
 
@@ -169,29 +217,6 @@ If I fail to improve the classification accuracy of true alignments using the st
 
 
 
-\begin{figure}
-\centering
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{FinalProject/conf_SVM.pdf}
-  \caption{Support Vector Machine}
-  \label{fig:sub1}
-\end{subfigure}%
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{FinalProject/conf_Random_Forest.pdf}
-  \caption{Random Forest}
-  \label{fig:sub2}
-\end{subfigure}
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{FinalProject/conf_Gradient_Boosting_Trees.pdf}
-\caption{Gradient Boosting Trees}
-  \label{fig:sub2}
-\end{subfigure}
-\caption{A figure with two subfigures}
-\label{fig:conf}
-\end{figure}
 
 
 
