@@ -158,8 +158,13 @@ def Gboost(params):
 
 	
 def plotPCA(X, y):
-	#from sklearn.decomposition import PCA as dim_red
-	from sklearn.manifold import TSNE as dim_red
+	algo = "pca"
+	if(algo == "pca"):
+		from sklearn.decomposition import PCA as dim_red
+	else:
+		algo = "tsne"	
+		from sklearn.manifold import TSNE as dim_red
+
 	matplotlib.rcParams['lines.markeredgewidth'] = 0
 	sklearn_pca = dim_red(n_components=2)
 	pca = sklearn_pca.fit_transform(X)
@@ -175,7 +180,7 @@ def plotPCA(X, y):
 	plt.xlabel('Component 1')
 	plt.ylabel('Component 2')
 	plt.legend()
-	plt.savefig("dim_red.pdf")	
+	plt.savefig("dim_red_{}.pdf".format(algo))	
 
 def confusion(df, algo):
 	sns.set_context("paper", font_scale=1.5)
@@ -206,6 +211,7 @@ def confusion(df, algo):
 X_train, y_train, X_val, y_val, X_test, y_test, features = load_data(validation=True)
 n, d = X_train.shape
 #plotPCA(X_train, y_train)
+#exit()
 
 threads = 16
 pool = ThreadPool(threads)
