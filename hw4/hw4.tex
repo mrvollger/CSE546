@@ -1,4 +1,5 @@
 \documentclass{article}
+\usepackage{listings}
 
 \usepackage{amsmath,amsfonts,amsthm,amssymb,amsopn,bm}
 % \usepackage{fullpage}
@@ -54,9 +55,12 @@
 \begin{document}
 \title{Homework \#4}
 \author{\normalsize{CSE 546: Machine Learning}\\
-\normalsize{Prof. Kevin Jamieson} \\
+\normalsize{Mitchell Vollger} \\
+\normalsize{Collaborators: April Lo, David Read, Anna Minkina} \\
 \normalsize{Due: 12/4  11:59 PM}}
 \maketitle
+
+
 
 
 \section*{Expectation Maximization}
@@ -75,6 +79,45 @@ The idea is that you would then construct a playlist out of the items $i \in \{1
   You have the epiphany that users are human beings whose preferences differ with their mood (e.g., music for workouts, studying, being sad, etc.).
   You decide she has $k$ music moods and aim to make $k$ playlists, one for each mood that could be modeled by a different weight vector $w$. The problem is that you don't know which observation $i \in \mathcal{S}$ is assigned to which mood. Describe (in math and words) how you would use the EM algorithm to make these $k$ playlists.  
 \end{enumerate}
+
+\newpage
+\section*{Problem 1A Answer}
+
+Fisrt I am going to transform the problem into a version that is argmin, and does not have a product. 
+\begin{align}
+    \hat{w} & = argmax_w \ \prod_{i\in S} p(y_i | x_i, w) \\ 
+    & = argmax_w \ \sum_{i\in S} log( p(y_i | x_i, w) ) \\
+    & = argmax_w \ \sum_{i\in S} y x_i^T w - log(y_i)! - e^{w^T x_i} \\
+    & = argmax_w \ \sum_{i\in S} y x_i^T w  - e^{w^T x_i} \\
+    & = argmin_w \ \sum_{i\in S} e^{w^T x_i} -  y x_i^T w 
+\end{align}
+
+Now if we can show the the second derivative of this function is always positive then we know the function is convex. 
+
+\begin{align}
+   \frac{d -log(L)}{dw} & =   \frac{d}{dw}  \sum_{i\in S} e^{w^T x_i} -  y x_i^T w \\
+    & =     \sum_{i\in S} \frac{d}{dw} e^{w^T x_i} - \frac{d}{dw}  y x_i^T w \\
+    & =      \sum_{i\in S} \frac{d}{dw} e^{x_i^T w} -  x_i y^T  \\
+    & =      \sum_{i\in S} x_i e^{x_i^T w} -  x_i y^T  \\
+    \frac{d^2 -log(L)}{d^2w} & =   \frac{d}{dw} \sum_{i\in S} x_i e^{x_i^T w} -  x_i y^T  \\
+    & =   \sum_{i\in S} \frac{d}{dw}  x_i e^{x_i^T w} - 0  \\
+& =   \sum_{i\in S} x_i^2 e^{x_i^T w}  
+\end{align}
+
+$x_i^2$ is always greater than zero and so is $e^{x_i^T w}$ therefore the above expression is always greater than zero, showing that the function is convex. 
+
+With this formulation we can use any convex solver to find $\hat{w}$. To do this we could use SGD, or any of the solvers in cvxpy. 
+
+
+\newpage
+
+
+
+
+
+
+
+
 
 
 \section*{Regression with Side Information}
@@ -148,6 +191,75 @@ Note that the defined constraint only forces $\widehat{f}$ to be monotonic on th
 \end{enumerate}
 
 
+
+
+
+
+
+
+
+\newpage
+
+\section*{Problem 2 Hyper parameters}
+For all answers in question 2 I did a hyper parameter search using by searching a full grid of combinations from the following ranges. \\
+I selected 20 values from $\gamma$ evenly in log space between $0.1$ and $1,000$. \\
+I selected 10 values from $\lambda$ evenly in log space between $10^{-5}$ and $1,000$. \\
+And where necessary I selected 10 values from $\lambda_2$ evenly in log space between $10^{-5}$ and $1,000$. \\
+In every case the hyper parameters were chosen by the minimum average MSE during leave one out cross validation. 
+
+\section*{Problem 2A Answer}
+
+The best hyper parameters from part A were: $\gamma=54.6$, and $\lambda=0.01$. Plot below. 
+\begin{center}
+    \includegraphics[width=.9\textwidth]{hw4/gitcvxpy/50_trainA.pdf}
+\end{center}
+
+
+
+\section*{Problem 2B Answer}
+
+The best hyper parameters from part B were: $\gamma=54.6$, and $\lambda=0.01$. Plot below. Slightly less over-fitting is observed with this loss function, particularly on the last two steps.  
+\begin{center}
+    \includegraphics[width=.9\textwidth]{hw4/gitcvxpy/50_trainB.pdf}
+\end{center}
+
+
+\section*{Problem 2C Answer}
+
+The best hyper parameters from part C were: $\gamma=379.0$, $\lambda_1=16.68$, and $\lambda_2 = 0.0046$. Plot below. Much better fitting of the true function, though the first and last step are offset from where the true function should be.  
+\begin{center}
+    \includegraphics[width=.9\textwidth]{hw4/gitcvxpy/50_trainC.pdf}
+\end{center}
+
+
+
+\section*{Problem 2D Answer}
+
+The best hyper parameters from part D were: $\gamma=379.3$, and $\lambda=0.036$. Plot below. Best fit of all the methods.  
+\begin{center}
+    \includegraphics[width=.9\textwidth]{hw4/gitcvxpy/50_trainD.pdf}
+\end{center}
+
+\section*{Problem 2 Code}
+\lstinputlisting[language=python]{hw4/gitcvxpy/ref.py}
+
+
+\newpage
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 \section*{Deep learning architectures}
 
 3. \grade{14} In this problem we will explore different deep learning architectures for a classification task. 
@@ -208,6 +320,80 @@ For all of the following perform a hyperparameter selection (manually by hand, r
 The number of hyperparameters to tune in the last exercise combined with the slow training times hopefully gave you a taste of how difficult it is to construct good performing networks. 
 It should be emphasized the networks we constructed are \textbf{tiny}; typical networks have dozens of layers, each with hyperparameters to tune. 
 Additional hyperparameters you are welcome to play with if you are so interested: replacing relu $\max\{0,x\}$ with a sigmoid $1/(1+e^{-x})$, max-pool with average-pool, and experimenting with batch-normalization or dropout.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\newpage
+
+\section*{Problem 3 Hyper parameters}
+For all answers in question 2 I did a hyper parameter search using by selecting 20 random combinations of hyper parameters from the following ranges. \\
+Learning rate(LR): Randomly in log space between $10^{-4}$ and $10^{-2}$. \\
+Momentum (Mo): Randomly in linear space between $0.1$ and $0.95$. \\
+Out Channels (M): Randomly in log space between $10$ and $1000$. \\
+Kernel size (P): Randomly in linear space between $2$ and $30$. \\
+Pool size (N): Randomly in linear space between $2$ and $6$. \\
+
+
+\section*{Problem 3A Answer}
+
+The best hyper parameters from part A were: $LR=0.000253$, and $Mo=0.39736$ with a test accuracy of 41.04. Plot below. 
+\begin{center}
+    \includegraphics[width=.9\textwidth]{hw4/a.pdf}
+\end{center}
+
+
+
+
+
+\section*{Problem 3B Answer}
+
+The best hyper parameters from part B were: $LR=0.000486$, $Mo=0.529$, and $M=1000$ with a test accuracy of 54.87. Plot below.
+\begin{center}
+    \includegraphics[width=.9\textwidth]{hw4/b.pdf}
+\end{center}
+
+
+
+
+\section*{Problem 3C Answer}
+
+The best hyper parameters from part c were: $LR=0.002848$, $Mo=0.2567$, $M=359$, $P=8$, and $N=4$ with a test accuracy of 68.61. Plot below.
+\begin{center}
+    \includegraphics[width=.9\textwidth]{hw4/c.pdf}
+\end{center}
+
+
+
+
+
+\section*{Problem 3 Code}
+\lstinputlisting[language=python]{hw4/deep.py}
+
+
+
+
+
+
+
+ 
+
+
+
+
+
 
 
 \end{document}
